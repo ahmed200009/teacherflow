@@ -533,7 +533,10 @@
             <h1>إدارة طلابك وحصصك الأونلاين أصبحت <span style="color: var(--brand-primary);">أكثر انسيابية</span></h1>
             <p>منصة شاملة وبسيطة مصممة خصيصاً للمعلمين المستقلين لمتابعة تقدم الطلاب، جدولة الحصص، وأرشفة الملفات والملاحظات الصوتية بتجربة بصرية فريدة.</p>
             <div>
-                <button class="btn btn-primary btn-lg" onclick="enterDemoMode()">دخول كـ معلم (نسخة تجريبية فورية)</button>
+                <button class="btn btn-primary" style="width: 100%; justify-content: center; margin-bottom: 15px;" onclick="enterDemoMode()">تسجيل الدخول</button>
+                <button class="btn btn-secondary" style="width: 100%; justify-content: center;" onclick="loginWithGoogle()">
+                    <i class="fab fa-google"></i> الدخول بواسطة Google
+                </button>
             </div>
         </section>
 
@@ -779,599 +782,577 @@
     <!-- 3. JAVASCRIPT SYSTEM ENGINE (VANILLA CORE) -->
     <!-- ========================================== -->
     <script type="module">
-        // استدعاء مكتبة Firebase بصيغة الـ ES Modules
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getAuth } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-        import { getFirestore } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    // ==========================================
+// 3. JAVASCRIPT SYSTEM ENGINE (FIRESTORE ONLY)
+// ==========================================
 
-        // إعدادات افتراضية فارغة، يقوم النظام بالتحول تلقائياً للـ Demo Mode إذا لم تملأها ببياناتك الحقيقية
-        const firebaseConfig = {
-            apiKey: "PLACEHOLDER", authDomain: "PLACEHOLDER", projectId: "PLACEHOLDER",
-            storageBucket: "PLACEHOLDER", messagingSenderId: "PLACEHOLDER", appId: "PLACEHOLDER"
-        };
+// استدعاء مكتبات Firebase الحديثة (تم إزالة Storage بالكامل)
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getAuth, signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { getFirestore, collection, addDoc, getDocs, doc, deleteDoc, query, where } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        let db = null;
-        let isFirebaseConnected = false;
+// ضع بيانات مشروعك الحقيقية هنا من 콘솔 Firebase
+const firebaseConfig = {
+    apiKey: "PLACEHOLDER",
+    authDomain: "PLACEHOLDER",
+    projectId: "PLACEHOLDER",
+    storageBucket: "PLACEHOLDER",
+    messagingSenderId: "PLACEHOLDER",
+    appId: "PLACEHOLDER"
+};
 
-        // اختبار الاتصال بـ Firebase أو تشغيل المحاكي الذكي
-        if(firebaseConfig.apiKey !== "PLACEHOLDER") {
-            try {
-                const app = initializeApp(firebaseConfig);
-                db = getFirestore(app);
-                isFirebaseConnected = true;
-                console.log("Firebase Connected Successfully.");
-            } catch(e) {
-                console.log("Firebase initial configuration failed. Running inside smart Demo Mode.");
-            }
-        }
+// تهيئة خدمات Firebase
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
 
-        // ==========================================
-        // الذاكرة التخزينية المحلية للمحاكاة (In-Memory State)
-        // ==========================================
-        window.state = {
-            students: [],
-            sessions: [],
-            currentSelectedStudentId: null,
-            isRecording: false
-        };
+// الذاكرة المؤقتة للتطبيق (State) واحتواء الملفات قبل الرفع
+window.state = {
+    students: [],
+    sessions: [],
+    currentSelectedStudentId: null,
+    isRecording: false,
+    currentAudioBlob: null, 
+    currentFile: null       
+};
 
-        // تفعيل مكتبة ظهور العناصر الرسومية المتقدمة AOS
-        AOS.init({ duration: 800, once: true });
+// تفعيل مكتبة ظهور العناصر الرسومية AOS
+AOS.init({ duration: 800, once: true });
 
-        // تهيئة الرسوم البيانية التفاعلية المتقدمة Chart.js
-        let ctx = document.getElementById('analyticsChart').getContext('2d');
-        window.analyticsChart = new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: ['الأسبوع 1', 'الأسبوع 2', 'الأسبوع 3', 'الأسبوع 4'],
-                datasets: [{
-                    label: 'ساعات الشرح والتدريس',
-                    data: [12, 19, 15, 24],
-                    borderColor: '#4f46e5',
-                    backgroundColor: 'rgba(79, 70, 229, 0.08)',
-                    fill: true,
-                    tension: 0.4,
-                    borderWidth: 3
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: { legend: { display: false } },
-                scales: { y: { grid: { display: false } }, x: { grid: { display: false } } }
-            }
-        });
+// تهيئة الرسم البياني Chart.js
+let ctx = document.getElementById('analyticsChart').getContext('2d');
+window.analyticsChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+        labels: ['الأسبوع 1', 'الأسبوع 2', 'الأسبوع 3', 'الأسبوع 4'],
+        datasets: [{
+            label: 'ساعات الشرح والتدريس',
+            data: [0, 0, 0, 0],
+            borderColor: '#4f46e5',
+            backgroundColor: 'rgba(79, 70, 229, 0.08)',
+            fill: true,
+            tension: 0.4,
+            borderWidth: 3
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: { y: { grid: { display: false } }, x: { grid: { display: false } } }
+    }
+});
 
-        // جعل التوابع متوفرة للنطاق العام لتعمل مع الـ HTML Elements
-        window.openAuthModal = () => document.getElementById('auth-modal').classList.add('active');
-        window.closeAuthModal = () => document.getElementById('auth-modal').classList.remove('active');
+// ==========================================
+// دالة مساعدة لتحويل الملفات والصوت إلى Base64
+// ==========================================
+function convertToBase64(fileOrBlob) {
+    return new Promise((resolve, reject) => {
+        if (!fileOrBlob) return resolve(null);
+        const reader = new FileReader();
+        reader.readAsDataURL(fileOrBlob);
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = (error) => reject(error);
+    });
+}
+
+// مراقب حالة تسجيل الدخول
+onAuthStateChanged(auth, async (user) => {
+    if (user) {
+        showToast("جاري مزامنة بياناتك السحابية...", "info");
+        await loadDataFromFirebase(user.uid);
         
-        window.enterDemoMode = () => {
-            closeAuthModal();
-            document.getElementById('landing-view').classList.remove('active');
-            document.getElementById('dashboard-layout').className = "app-view active";
-            showToast("تم الدخول بنجاح كمعلم (وضعية المحاكاة الكاملة المتكاملة)", "success");
-            renderDashboardStats();
-            
-            document.getElementById('current-date-string').innerText = new Date().toLocaleDateString('ar-EG', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-        };
+        document.getElementById('landing-view').style.display = 'none';
+        document.getElementById('dashboard-layout').className = "app-view active";
+        document.getElementById('current-date-string').innerText = new Date().toLocaleDateString('ar-EG', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+    } else {
+        document.getElementById('dashboard-layout').classList.remove('active');
+        document.getElementById('landing-view').style.display = 'block';
+    }
+});
 
-        window.logout = () => {
-            document.getElementById('dashboard-layout').classList.remove('active');
-            document.getElementById('landing-view').className = "app-view active";
-            showToast("تم تسجيل الخروج بنجاح", "info");
-        };
+// دالة تحميل البيانات من Firestore
+async function loadDataFromFirebase(userId) {
+    try {
+        const qStudents = query(collection(db, "students"), where("userId", "==", userId));
+        const snapStudents = await getDocs(qStudents);
+        window.state.students = [];
+        snapStudents.forEach(doc => window.state.students.push({ id: doc.id, ...doc.data() }));
 
-        // نظام التبديل والتحكم الكامل في الـ Sub Views لداخل الـ Dashboard
-        window.switchSubView = (targetViewId) => {
-            document.querySelectorAll('.sub-view').forEach(view => view.style.display = 'none');
-            document.querySelectorAll('.sidebar-menu li').forEach(li => li.classList.remove('active'));
-            
-            const selectedView = document.getElementById(`subview-${targetViewId}`);
-            if (selectedView) selectedView.style.display = 'block';
+        const qSessions = query(collection(db, "sessions"), where("userId", "==", userId));
+        const snapSessions = await getDocs(qSessions);
+        window.state.sessions = [];
+        snapSessions.forEach(doc => window.state.sessions.push({ id: doc.id, ...doc.data() }));
 
-            // تفعيل وتغيير العناوين وأزرار الأكشن السريعة ديناميكياً بناءً على مكان المدرس الحالي
-            const titleElement = document.getElementById('navbar-title');
-            const quickActionBtn = document.getElementById('quick-action-btn');
+        renderDashboardStats();
+    } catch (error) {
+        showToast("حدث خطأ أثناء تحميل البيانات"، "error");
+        console.error(error);
+    }
+}
 
-            if (targetViewId === 'main-dash') {
-                titleElement.innerText = "لوحة التحكم الإحصائية";
-                quickActionBtn.style.display = "inline-flex";
-                quickActionBtn.innerHTML = `<i class="fas fa-plus"></i> إضافة طالب جديد`;
-                quickActionBtn.setAttribute('onclick', 'openAddStudentModal()');
-                document.getElementById('menu-dash').classList.add('active');
-                renderDashboardStats();
-            } else if (targetViewId === 'students-list') {
-                titleElement.innerText = "دليل وإدارة الطلاب";
-                quickActionBtn.style.display = "inline-flex";
-                quickActionBtn.innerHTML = `<i class="fas fa-user-plus"></i> طالب جديد`;
-                quickActionBtn.setAttribute('onclick', 'openAddStudentModal()');
-                document.getElementById('menu-students').classList.add('active');
-                renderStudentsCards();
-            }  else if (targetViewId === 'student-profile') {
-                titleElement.innerText = "الملف التعليمي للطالب";
-                quickActionBtn.style.display = "none";
-            }
-        };
+// التحكم بالنوافذ المنبثقة
+window.openAuthModal = () => document.getElementById('auth-modal').classList.add('active');
+window.closeAuthModal = () => document.getElementById('auth-modal').classList.remove('active');
+window.openAddStudentModal = () => document.getElementById('add-student-modal').classList.add('active');
+window.closeModal = (id) => document.getElementById(id).classList.remove('active');
 
-        // تشغيل البث والتبديل البصري للثيم الليلي والفاتح بمرونة قصوى
-        window.toggleTheme = () => {
-            const currentTheme = document.documentElement.getAttribute('data-theme');
-            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-            document.documentElement.setAttribute('data-theme', newTheme);
-            const icon = document.querySelectorAll('.theme-toggle i');
-            icon.forEach(i => i.className = newTheme === 'dark' ? 'fas fa-sun' : 'fas fa-moon');
-            showToast(`تم تفعيل الوضع ${newTheme === 'dark' ? 'الليلي' : 'النهاري'} النظيف`, "info");
-        };
-
-        // دالة عرض التنبيهات المنبثقة التفاعلية (Micro-interactions)
-        window.showToast = (message, type = "success") => {
-            const container = document.getElementById('toast-container');
-            const toast = document.createElement('div');
-            toast.className = `toast glass`;
-            toast.style.background = type === "success" ? "#10b981" : type === "error" ? "#ef4444" : "#4f46e5";
-            toast.innerText = message;
-            container.appendChild(toast);
-            setTimeout(() => toast.remove(), 4500);
-        };
-
-        
-        function updateAnalyticsChart() {
-            const totalHours = window.state.sessions.reduce((sum, session) => {
-                return sum + (session.duration || 0);
-            }, 0);
-
-            analyticsChart.data.datasets[0].data = [
-                totalHours * 0.25,
-                totalHours * 0.5,
-                totalHours * 0.75,
-                totalHours
-            ];
-
-            analyticsChart.update();
-        }
-
-        window.deleteStudent = (studentId) => {
-            if(confirm('هل تريد حذف الطالب؟')) {
-                window.state.students = window.state.students.filter(s => s.id !== studentId);
-                window.state.sessions = window.state.sessions.filter(s => s.studentId !== studentId);
-                localStorage.setItem('teacherflow_state', JSON.stringify(window.state));
-                renderStudentsCards();
-                renderDashboardStats();
-                showToast('تم حذف الطالب', 'success');
-            }
-        };
-
-        window.deleteSession = (sessionId) => {
-            if(confirm('هل تريد حذف الحصة؟')) {
-                window.state.sessions = window.state.sessions.filter(s => s.id !== sessionId);
-                localStorage.setItem('teacherflow_state', JSON.stringify(window.state));
-
-                if(window.state.currentSelectedStudentId){
-                    renderStudentTimeline(window.state.currentSelectedStudentId);
-                }
-
-                renderDashboardStats();
-                updateAnalyticsChart();
-                showToast('تم حذف الحصة', 'success');
-            }
-        };
-
-
-// حساب وإرسال البيانات الإحصائية للواجهة المباشرة
-        function renderDashboardStats() {
-            document.getElementById('stat-students-count').innerText = window.state.students.length;
-            document.getElementById('stat-sessions-count').innerText = window.state.sessions.length;
-            updateAnalyticsChart();
-        }
-
-        // بناء وعرض كروت الطلاب الذكية باستخدام Glassmorphism والـ Flexbox
-        function renderStudentsCards() {
-            const container = document.getElementById('students-cards-container');
-            container.innerHTML = '';
-            
-            if(window.state.students.length === 0) {
-                container.innerHTML = `<div style="grid-column: 1/-1; text-align:center; padding:40px; color:var(--text-muted);">لا يوجد طلاب مسجلين حالياً. اضغط على طالب جديد في الأعلى لبدء التدريس.</div>`;
-                return;
-            }
-
-            window.state.students.forEach(st => {
-                const count = window.state.sessions.filter(s => s.studentId === st.id).length;
-                const card = document.createElement('div');
-                card.className = 'student-card glass';
-                card.setAttribute('onclick', `viewStudentProfile('${st.id}')`);
-                card.innerHTML = `
-                    <div class="student-badge">${st.status}</div>
-                    <div class="student-avatar">${st.name.charAt(0)}</div>
-                    <h3 style="margin-bottom:6px;">${st.name}</h3>
-                    <p style="color:var(--brand-primary); font-size:14px; font-weight:600; margin-bottom:12px;">${st.level}</p>
-                    <p style="color:var(--text-muted); font-size:13px; line-height:1.4; margin-bottom:15px;"><i class="fas fa-bullseye"></i> الهدف: ${st.target}</p>
-                    
-    <div style="margin-top:15px; display:flex; gap:10px; justify-content:center;">
-        <button class="btn btn-secondary" onclick="event.stopPropagation(); deleteStudent('${st.id}')">
-            <i class="fas fa-trash"></i> حذف
-        </button>
-    </div>
-
-    <div style="border-top:1px solid var(--border-color); padding-top:12px; font-size:12px; color:var(--text-muted); display:flex; justify-content:space-around;">
-
-                        <span><i class="fas fa-book-reader"></i> الحصص: ${count}</span>
-                        <span><i class="fas fa-calendar-day"></i> منذ: ${st.date}</span>
-                    </div>
-                `;
-                container.appendChild(card);
-            });
-        }
-
-        // فلترة تفاعلية فورية مخصصة للبحث السريع عن الطلاب عن طريق الإدخال
-        window.filterStudents = () => {
-            const query = document.getElementById('search-student').value.toLowerCase();
-            const cards = document.querySelectorAll('.student-card');
-            cards.forEach((card, idx) => {
-                const student = window.state.students[idx];
-                if(student) {
-                    const match = student.name.toLowerCase().includes(query) || student.level.toLowerCase().includes(query);
-                    card.style.display = match ? 'block' : 'none';
-                }
-            });
-        };
-
-        // التوابع الأساسية لإدارة النوافذ والأشكال (Modals Handling)
-        window.openAddStudentModal = () => document.getElementById('add-student-modal').classList.add('active');
-        window.closeModal = (id) => document.getElementById(id).classList.remove('active');
-
-        window.saveStudentData = () => {
-            const name = document.getElementById('stud-name').value.trim();
-            const level = document.getElementById('stud-level').value.trim();
-            const target = document.getElementById('stud-target').value.trim();
-            const notes = document.getElementById('stud-notes').value.trim();
-
-            if(!name || !level) {
-                showToast("يرجى ملء اسم الطالب ومستواه التعليمي كحد أدنى", "error");
-                return;
-            }
-
-            const newStudent = {
-                id: `st-${Date.now()}`,
-                name: name,
-                level: level,
-                target: target || "عام",
-                notes: notes || "لا توجد ملاحظات إضافية",
-                date: new Date().toISOString().split('T')[0],
-                status: "نشط"
-            };
-
-            window.state.students.push(newStudent);
-            showToast(`تم تسجيل الطالب ${name} وحفظ ملفه المالي والتعليمي بنجاح`, "success");
-            closeModal('add-student-modal');
-            
-            // تصفير خلايا الإدخال بالكامل
-            document.getElementById('stud-name').value = '';
-            document.getElementById('stud-level').value = '';
-            document.getElementById('stud-target').value = '';
-            document.getElementById('stud-notes').value = '';
-
-            renderStudentsCards();
-        };
-
-        // فتح ملف بروفايل طالب مخصص ديناميكياً وعرض التايم لاين الخاص بجلساته
-        window.viewStudentProfile = (studentId) => {
-            window.state.currentSelectedStudentId = studentId;
-            switchSubView('student-profile');
-
-            const student = window.state.students.find(s => s.id === studentId);
-            const profileCard = document.getElementById('profile-details-card');
-            
-            if(student) {
-                profileCard.innerHTML = `
-                    <div class="student-avatar" style="width:90px; height:90px; font-size:34px;">${student.name.charAt(0)}</div>
-                    <div>
-                        <h2 style="margin-bottom:8px;">${student.name}</h2>
-                        <span style="background:rgba(79, 70, 229, 0.1); color:var(--brand-primary); padding:4px 12px; border-radius:20px; font-size:13px; font-weight:600;">${student.level}</span>
-                        <p style="color:var(--text-muted); font-size:14px; margin-top:12px;"><i class="fas fa-info-circle"></i> ${student.notes}</p>
-                    </div>
-                    <div style="text-align:left; border-right:1px solid var(--border-color); padding-right:20px;">
-                        <p style="font-size:14px; color:var(--text-muted); mb-4">الهدف: <strong>${student.target}</strong></p>
-                        <p style="font-size:14px; color:var(--text-muted); margin-top:6px;">تاريخ الانتساب: <strong>${student.date}</strong></p>
-                    </div>
-                `;
-                renderStudentTimeline(studentId);
-            }
-        };
-
-        // بناء خط زمني ناعم وتفاعلي لجميع الحصص والشروحات السابقة للطالب الحالي
-        function renderStudentTimeline(studentId) {
-            const container = document.getElementById('sessions-timeline-container');
-            container.innerHTML = '';
-
-            const studentSessions = window.state.sessions.filter(s => s.studentId === studentId);
-
-            if(studentSessions.length === 0) {
-                container.innerHTML = `<p style="color:var(--text-muted); padding:20px 0;">لا توجد حصص مسجلة وموثقة لهذا الطالب بعد.</p>`;
-                return;
-            }
-
-            // ترتيب تنازلي حسب التاريخ لعرض الأحدث في الأعلى دائماً
-            studentSessions.sort((a,b) => new Date(b.date) - new Date(a.date)).forEach(sess => {
-                const item = document.createElement('div');
-                item.className = 'timeline-item glass';
-                item.style.padding = '20px';
-                item.style.borderRadius = 'var(--radius-md)';
-                item.innerHTML = `
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-                        <h4 style="color:var(--brand-primary); font-size:16px;">${sess.title}</h4>
-                        <span style="font-size:12px; color:var(--text-muted); font-weight:600;"><i class="far fa-clock"></i> ${sess.date}</span>
-                    </div>
-                    <p style="font-size:14px; line-height:1.5; margin-bottom:10px;">${sess.details}</p>
-                    <div style="background:rgba(255,255,255,0.2); padding:8px 12px; border-radius:6px; font-size:13px; display:inline-block; border:1px solid var(--border-color);">
-                        <strong style="color:var(--brand-secondary);"><i class="fas fa-tasks"></i> الواجب المطلوب:</strong> ${sess.homework}
-                    </div>
-                    ${sess.file ? `<div style="margin-top:10px; font-size:12px; color:var(--brand-primary);"><i class="fas fa-paperclip"></i> ملف مرفق: ${sess.file}</div>` : ''}
-                    <div style="margin-top:15px;">
-                        <button class="btn btn-secondary" onclick="deleteSession('${sess.id}')">
-                            <i class="fas fa-trash"></i> حذف الحصة
-                        </button>
-                    </div>
-                `;
-                container.appendChild(item);
-            });
-        }
-
-        // توابع إضافة حصة تعليمية جديدة من داخل ملف البروفايل أو الواجهة السريعة للوحة
-        window.openAddSessionModal = () => {
-            document.getElementById('student-select-group').style.display = 'none';
-            document.getElementById('add-session-modal').classList.add('active');
-        };
-
-        window.openAddSessionModalGlobal = () => {
-            const select = document.getElementById('session-student-select');
-            select.innerHTML = '';
-            window.state.students.forEach(st => {
-                select.innerHTML += `<option value="${st.id}">${st.name}</option>`;
-            });
-            document.getElementById('student-select-group').style.display = 'block';
-            document.getElementById('add-session-modal').classList.add('active');
-        };
-
-        // محاكاة معالجة الملفات واللقطات عبر السحب والإفلات والرفع الاختياري
-        window.triggerFileSelect = () => document.getElementById('file-input').click();
-        window.handleFileSelect = (event) => {
-            const file = event.target.files[0];
-            if(file) {
-                document.getElementById('file-preview-name').innerText = `تم اختيار ملف بنجاح: ${file.name}`;
-                showToast(`تم تجهيز ملف "${file.name}" للرفع والأرشفة`, "info");
-            }
-        };
-
-        // تشغيل محاكي مسجل النطق الصوتي التفاعلي لإضافة توجيهات الميكروفون الحية
-        window.toggleAudioRecording = () => {
-            const btn = document.getElementById('record-btn');
-            const visualizer = document.getElementById('wave-visualizer');
-            
-            if(!window.state.isRecording) {
-                window.state.isRecording = true;
-                btn.innerHTML = `<i class="fas fa-square" style="color:black;"></i> إنهاء وحفظ التسجيل`;
-                btn.style.background = "#ef4444";
-                btn.style.color = "white";
-                visualizer.classList.add('active');
-                showToast("الميكروفون قيد التقاط التوجيه الصوتي للمعلم حالياً...", "info");
-            } else {
-                window.state.isRecording = false;
-                btn.innerHTML = `<i class="fas fa-circle" style="color:red;"></i> ابدأ التسجيل الحي`;
-                btn.style.background = "transparent";
-                btn.style.color = "var(--brand-primary)";
-                visualizer.classList.remove('active');
-                showToast("تم الحفظ والمعالجة السحابية للملاحظة الصوتية MP3 بنجاح", "success");
-            }
-        };
-
-        // دالة حفظ وبث الجلسة التعليمية وتصديرها التلقائي لقاعدة البيانات والمصفوفات المحلية
-        window.saveSessionData = () => {
-            const title = document.getElementById('sess-title').value.trim();
-            const details = document.getElementById('sess-details').value.trim();
-            
-            const homework = document.getElementById('sess-homework').value.trim();
-            const duration = parseFloat(document.getElementById('sess-duration').value);
-
-            
-            let studentId = window.state.currentSelectedStudentId;
-            // إذا فتحنا الحصة من الخيار السريع العام، نقرأ المعرف المختار من صندوق الاختيار
-            if(document.getElementById('student-select-group').style.display === 'block') {
-                studentId = document.getElementById('session-student-select').value;
-            }
-
-            if(!title || !details) {
-                showToast("يرجى ملء عنوان الحصة ومجمل الشرح للتلقين والتوثيق", "error");
-                return;
-            }
-
-            const newSession = {
-                id: `ss-${Date.now()}`,
-                studentId: studentId,
-                title: title,
-                details: details,
-                homework: homework || "مراجعة ما تم شرحه شفهياً فقط",
-                date: new Date().toISOString().split('T')[0],
-                file: document.getElementById('file-input').files[0]?.name || null,
-                duration: duration
-            };
-
-            window.state.sessions.push(newSession);
-            localStorage.setItem('teacherflow_state', JSON.stringify(window.state));
-            showToast("تم توثيق الحصة وتحديث الخط الزمني والـ Timeline للطالب الفردي بنجاح تام", "success");
-            closeModal('add-session-modal');
-
-            // تصفير المدخلات بالكامل لجعل الواجهة مريحة وسريعة في الحصة القادمة
-            document.getElementById('sess-title').value = '';
-            document.getElementById('sess-details').value = '';
-            document.getElementById('sess-homework').value = '';
-            document.getElementById('file-preview-name').innerText = '';
-
-            // إعادة توجيه ذكي للواجهات لتحديث العروض المرئية
-            if(window.state.currentSelectedStudentId) {
-                renderStudentTimeline(window.state.currentSelectedStudentId);
-            } else {
-                renderDashboardStats();
-            }
-        };
-
-        // محاكاة توليد وطباعة التقارير بصيغة PDF التعليمية الاحترافية
-        window.exportPDF = () => {
-            const student = window.state.students.find(s => s.id === window.state.currentSelectedStudentId);
-            if(student) {
-                showToast(`جاري تشغيل محرك الطباعة لتوليد ملف كشف تقدم الطالب "${student.name}"...`, "info");
-                setTimeout(() => {
-                    alert(`[TeacherFlow Engine]\nتم توليد مستند كشف الأداء والالتزام لـ ${student.name} بنجاح.\nالمستوى الدراسي: ${student.level}\nمعدل الحضور: 100%\nالملف جاهز للطباعة أو الإرسال المباشر لأولياء الأمور.`);
-                }, 1000);
-            }
-        };
-
-        // بناء خطة وجدول الأيام التفاعلية للـ Calendar للرؤية الأسبوعية السريعة للأيام المزدحمة
-        function renderCalendarMock() {
-            const container = document.getElementById('calendar-days-mock');
-            container.innerHTML = '';
-            const days = ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
-            const workloads = ['حصة واحدة', '3 حصص ممتلئ', 'حصتان', 'مزدحم جداً', 'يوم راحة', 'حصتان', '1 حصة'];
-
-            days.forEach((day, index) => {
-                const box = document.createElement('div');
-                box.className = 'glass';
-                box.style.padding = '15px';
-                box.style.borderRadius = 'var(--radius-md)';
-                box.style.borderTop = index === 3 ? '4px solid var(--brand-secondary)' : '1px solid var(--border-color)';
-                box.innerHTML = `
-                    <div style="font-weight:bold; font-size:14px; margin-bottom:8px;">${day}</div>
-                    <div style="font-size:12px; color:var(--text-muted);">${workloads[index]}</div>
-                `;
-                container.appendChild(box);
-            });
-        }
+// تسجيل الدخول بالبريد والباسورد
+window.enterDemoMode = async () => {
+    const email = document.getElementById('auth-email').value.trim();
+    const pass = document.getElementById('auth-pass').value.trim();
     
-        // حفظ تلقائي للبيانات محلياً
-        function saveStateToLocalStorage() {
-            localStorage.setItem('teacherflow_state', JSON.stringify(window.state));
+    if(!email || !pass) {
+        showToast("يرجى إدخال البريد الإلكتروني وكلمة المرور", "error");
+        return;
+    }
+    try {
+        await signInWithEmailAndPassword(auth, email, pass);
+        closeAuthModal();
+    } catch(e) {
+        showToast("فشل تسجيل الدخول: " + e.message, "error");
+    }
+};
+
+// تسجيل الدخول عبر Google
+window.loginWithGoogle = async () => {
+    const provider = new GoogleAuthProvider();
+    try {
+        await signInWithPopup(auth, provider);
+        closeAuthModal();
+    } catch(e) {
+        showToast("فشل الاتصال بـ Google: " + e.message, "error");
+    }
+};
+
+window.logout = async () => {
+    try {
+        await signOut(auth);
+        showToast("تم تسجيل الخروج بنجاح", "info");
+    } catch (e) {
+        showToast("تعذر تسجيل الخروج", "error");
+    }
+};
+
+// تبديل الواجهات الداخلية
+window.switchSubView = (targetViewId) => {
+    document.querySelectorAll('.sub-view').forEach(view => view.style.display = 'none');
+    document.querySelectorAll('.sidebar-menu li').forEach(li => li.classList.remove('active'));
+    
+    const selectedView = document.getElementById(`subview-${targetViewId}`);
+    if (selectedView) selectedView.style.display = 'block';
+
+    const titleElement = document.getElementById('navbar-title');
+    const quickActionBtn = document.getElementById('quick-action-btn');
+
+    if (targetViewId === 'main-dash') {
+        titleElement.innerText = "لوحة التحكم الإحصائية";
+        quickActionBtn.style.display = "inline-flex";
+        quickActionBtn.innerHTML = `<i class="fas fa-plus"></i> إضافة طالب جديد`;
+        quickActionBtn.setAttribute('onclick', 'openAddStudentModal()');
+        document.getElementById('menu-dash').classList.add('active');
+        renderDashboardStats();
+    } else if (targetViewId === 'students-list') {
+        titleElement.innerText = "دليل وإدارة الطلاب";
+        quickActionBtn.style.display = "inline-flex";
+        quickActionBtn.innerHTML = `<i class="fas fa-user-plus"></i> طالب جديد`;
+        quickActionBtn.setAttribute('onclick', 'openAddStudentModal()');
+        document.getElementById('menu-students').classList.add('active');
+        renderStudentsCards();
+    } else if (targetViewId === 'student-profile') {
+        titleElement.innerText = "الملف التعليمي للطالب";
+        quickActionBtn.style.display = "none";
+    }
+};
+
+window.toggleTheme = () => {
+    const currentTheme = document.documentElement.getAttribute('data-theme');
+    const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', newTheme);
+    document.querySelectorAll('.theme-toggle i').forEach(i => i.className = newTheme === 'dark' ? 'fas fa-sun' : 'fas fa-moon');
+    showToast(`تم تفعيل الوضع ${newTheme === 'dark' ? 'الليلي' : 'النهاري'}`, "info");
+};
+
+window.showToast = (message, type = "success") => {
+    const container = document.getElementById('toast-container');
+    const toast = document.createElement('div');
+    toast.className = `toast glass`;
+    toast.style.background = type === "success" ? "#10b981" : type === "error" ? "#ef4444" : "#4f46e5";
+    toast.innerText = message;
+    container.appendChild(toast);
+    setTimeout(() => toast.remove(), 4500);
+};
+
+function updateAnalyticsChart() {
+    const totalHours = window.state.sessions.reduce((sum, s) => sum + (s.duration || 0), 0);
+    analyticsChart.data.datasets[0].data = [totalHours * 0.25, totalHours * 0.5, totalHours * 0.75, totalHours];
+    analyticsChart.update();
+}
+
+function renderDashboardStats() {
+    document.getElementById('stat-students-count').innerText = window.state.students.length;
+    document.getElementById('stat-sessions-count').innerText = window.state.sessions.length;
+    updateAnalyticsChart();
+}
+
+function renderStudentsCards() {
+    const container = document.getElementById('students-cards-container');
+    container.innerHTML = '';
+    
+    if(window.state.students.length === 0) {
+        container.innerHTML = `<div style="grid-column: 1/-1; text-align:center; padding:40px; color:var(--text-muted);">لا يوجد طلاب مسجلين حالياً.</div>`;
+        return;
+    }
+
+    window.state.students.forEach(st => {
+        const count = window.state.sessions.filter(s => s.studentId === st.id).length;
+        const card = document.createElement('div');
+        card.className = 'student-card glass';
+        card.setAttribute('onclick', `viewStudentProfile('${st.id}')`);
+        card.innerHTML = `
+            <div class="student-badge">${st.status}</div>
+            <div class="student-avatar">${st.name.charAt(0)}</div>
+            <h3 style="margin-bottom:6px;">${st.name}</h3>
+            <p style="color:var(--brand-primary); font-size:14px; font-weight:600; margin-bottom:12px;">${st.level}</p>
+            <p style="color:var(--text-muted); font-size:13px; line-height:1.4; margin-bottom:15px;"><i class="fas fa-bullseye"></i> الهدف: ${st.target}</p>
+            <div style="margin-top:15px; display:flex; gap:10px; justify-content:center;">
+                <button class="btn btn-secondary" onclick="event.stopPropagation(); deleteStudent('${st.id}')">
+                    <i class="fas fa-trash"></i> حذف
+                </button>
+            </div>
+            <div style="border-top:1px solid var(--border-color); padding-top:12px; font-size:12px; color:var(--text-muted); display:flex; justify-content:space-around; margin-top:10px;">
+                <span><i class="fas fa-book-reader"></i> الحصص: ${count}</span>
+                <span><i class="fas fa-calendar-day"></i> منذ: ${st.date}</span>
+            </div>
+        `;
+        container.appendChild(card);
+    });
+}
+
+window.filterStudents = () => {
+    const query = document.getElementById('search-student').value.toLowerCase();
+    document.querySelectorAll('.student-card').forEach((card, idx) => {
+        const student = window.state.students[idx];
+        if(student) {
+            const match = student.name.toLowerCase().includes(query) || student.level.toLowerCase().includes(query);
+            card.style.display = match ? 'block' : 'none';
+        }
+    });
+};
+
+// حفظ بيانات الطالب في Firestore
+window.saveStudentData = async () => {
+    const name = document.getElementById('stud-name').value.trim();
+    const level = document.getElementById('stud-level').value.trim();
+    const target = document.getElementById('stud-target').value.trim();
+    const notes = document.getElementById('stud-notes').value.trim();
+
+    if(!name || !level) {
+        showToast("يرجى ملء اسم الطالب ومستواه التعليمي", "error");
+        return;
+    }
+
+    const user = auth.currentUser;
+    if(!user) return showToast("يجب تسجيل الدخول أولاً", "error");
+
+    const studentData = {
+        userId: user.uid,
+        name: name,
+        level: level,
+        target: target || "عام",
+        notes: notes || "لا توجد ملاحظات إضافية",
+        date: new Date().toISOString().split('T')[0],
+        status: "نشط"
+    };
+
+    try {
+        const docRef = await addDoc(collection(db, "students"), studentData);
+        window.state.students.push({ id: docRef.id, ...studentData });
+        
+        showToast(`تم تسجيل الطالب ${name} بنجاح`, "success");
+        closeModal('add-student-modal');
+        
+        document.getElementById('stud-name').value = '';
+        document.getElementById('stud-level').value = '';
+        document.getElementById('stud-target').value = '';
+        document.getElementById('stud-notes').value = '';
+
+        renderStudentsCards();
+        renderDashboardStats();
+    } catch(e) {
+        showToast("حدث خطأ أثناء الحفظ", "error");
+    }
+};
+
+window.deleteStudent = async (studentId) => {
+    if(confirm('هل تريد حذف الطالب نهائياً؟')) {
+        try {
+            await deleteDoc(doc(db, "students", studentId));
+            window.state.students = window.state.students.filter(s => s.id !== studentId);
+            renderStudentsCards();
+            renderDashboardStats();
+            showToast('تم حذف الطالب بنجاح', 'success');
+        } catch(e) {
+            showToast("فشل الحذف من السيرفر", "error");
+        }
+    }
+};
+
+window.viewStudentProfile = (studentId) => {
+    window.state.currentSelectedStudentId = studentId;
+    switchSubView('student-profile');
+
+    const student = window.state.students.find(s => s.id === studentId);
+    const profileCard = document.getElementById('profile-details-card');
+    
+    if(student) {
+        profileCard.innerHTML = `
+            <div class="student-avatar" style="width:90px; height:90px; font-size:34px;">${student.name.charAt(0)}</div>
+            <div>
+                <h2 style="margin-bottom:8px;">${student.name}</h2>
+                <span style="background:rgba(79, 70, 229, 0.1); color:var(--brand-primary); padding:4px 12px; border-radius:20px; font-size:13px; font-weight:600;">${student.level}</span>
+                <p style="color:var(--text-muted); font-size:14px; margin-top:12px;"><i class="fas fa-info-circle"></i> ${student.notes}</p>
+            </div>
+            <div style="text-align:left; border-right:1px solid var(--border-color); padding-right:20px;">
+                <p style="font-size:14px; color:var(--text-muted);">الهدف: <strong>${student.target}</strong></p>
+                <p style="font-size:14px; color:var(--text-muted); margin-top:6px;">تاريخ الانتساب: <strong>${student.date}</strong></p>
+            </div>
+        `;
+        renderStudentTimeline(studentId);
+    }
+};
+
+// عرض الحصص من Firestore وقراءة ملفات الـ Base64 مباشرة
+function renderStudentTimeline(studentId) {
+    const container = document.getElementById('sessions-timeline-container');
+    container.innerHTML = '';
+
+    const studentSessions = window.state.sessions.filter(s => s.studentId === studentId);
+
+    if(studentSessions.length === 0) {
+        container.innerHTML = `<p style="color:var(--text-muted); padding:20px 0;">لا توجد حصص مسجلة وموثقة لهذا الطالب بعد.</p>`;
+        return;
+    }
+
+    studentSessions.sort((a,b) => new Date(b.date) - new Date(a.date)).forEach(sess => {
+        const item = document.createElement('div');
+        item.className = 'timeline-item glass';
+        item.style.padding = '20px';
+        item.style.borderRadius = 'var(--radius-md)';
+        item.innerHTML = `
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                <h4 style="color:var(--brand-primary); font-size:16px;">${sess.title}</h4>
+                <span style="font-size:12px; color:var(--text-muted); font-weight:600;"><i class="far fa-clock"></i> ${sess.date}</span>
+            </div>
+            <p style="font-size:14px; line-height:1.5; margin-bottom:10px;">${sess.details}</p>
+            <div style="background:rgba(255,255,255,0.2); padding:8px 12px; border-radius:6px; font-size:13px; display:inline-block; border:1px solid var(--border-color);">
+                <strong style="color:var(--brand-secondary);"><i class="fas fa-tasks"></i> الواجب المطلوب:</strong> ${sess.homework}
+            </div>
+            ${sess.fileBase64 ? `<div style="margin-top:10px; font-size:12px;"><i class="fas fa-paperclip"></i> ملف مرفق: <a href="${sess.fileBase64}" download="${sess.fileName || 'file'}" style="color:var(--brand-primary); text-decoration:underline;">تحميل أو فتح (${sess.fileName || 'الملف'})</a></div>` : ''}
+            ${sess.audioBase64 ? `<div style="margin-top:12px;"><audio src="${sess.audioBase64}" controls style="width:100%; max-width:320px; height:34px;"></audio></div>` : ''}
+            <div style="margin-top:15px; border-top:1px solid var(--border-color); padding-top:10px;">
+                <button class="btn btn-secondary" style="padding:4px 10px; font-size:12px;" onclick="deleteSession('${sess.id}')">
+                    <i class="fas fa-trash"></i> حذف الحصة
+                </button>
+            </div>
+        `;
+        container.appendChild(item);
+    });
+}
+
+window.openAddSessionModal = () => {
+    document.getElementById('student-select-group').style.display = 'none';
+    document.getElementById('add-session-modal').classList.add('active');
+};
+
+window.openAddSessionModalGlobal = () => {
+    const select = document.getElementById('session-student-select');
+    select.innerHTML = '';
+    window.state.students.forEach(st => {
+        select.innerHTML += `<option value="${st.id}">${st.name}</option>`;
+    });
+    document.getElementById('student-select-group').style.display = 'block';
+    document.getElementById('add-session-modal').classList.add('active');
+};
+
+// التقاط المرفقات
+window.triggerFileSelect = () => document.getElementById('file-input').click();
+window.handleFileSelect = (event) => {
+    const file = event.target.files[0];
+    if(file) {
+        window.state.currentFile = file;
+        document.getElementById('file-preview-name').innerText = `تم تجهيز ملف: ${file.name}`;
+    }
+};
+
+// معالجة وحفظ الحصة بالكامل بترميز Base64 وحفظها داخل Firestore مباشرة
+window.saveSessionData = async () => {
+    const title = document.getElementById('sess-title').value.trim();
+    const details = document.getElementById('sess-details').value.trim();
+    const homework = document.getElementById('sess-homework').value.trim();
+    const duration = parseFloat(document.getElementById('sess-duration').value);
+
+    let studentId = window.state.currentSelectedStudentId;
+    if(document.getElementById('student-select-group').style.display === 'block') {
+        studentId = document.getElementById('session-student-select').value;
+    }
+
+    if(!title || !details) {
+        showToast("يرجى ملء عنوان الحصة وتفاصيل الشرح الرئيسي", "error");
+        return;
+    }
+
+    const user = auth.currentUser;
+    if(!user) return showToast("انتهت الجلسة، اعد تسجيل الدخول", "error");
+
+    showToast("جاري معالجة وتشفير الوسائط وحفظها في Firestore...", "info");
+
+    try {
+        // تحويل الملف والصوت إلى نصوص Base64 بشكل متوازي
+        const fileBase64 = await convertToBase64(window.state.currentFile);
+        const audioBase64 = await convertToBase64(window.state.currentAudioBlob);
+
+        // كتابة المستند بالكامل داخل Firestore
+        const sessionData = {
+            userId: user.uid,
+            studentId: studentId,
+            title: title,
+            details: details,
+            homework: homework || "مراجعة ما تم شرحه شفهياً",
+            date: new Date().toISOString().split('T')[0],
+            duration: duration,
+            fileBase64: fileBase64, // حفظ النص المشفر للملف هنا
+            fileName: window.state.currentFile ? window.state.currentFile.name : null,
+            audioBase64: audioBase64 // حفظ النص المشفر للصوت هنا
+        };
+
+        const docRef = await addDoc(collection(db, "sessions"), sessionData);
+        window.state.sessions.push({ id: docRef.id, ...sessionData });
+
+        showToast("تم توثيق الحصة وحفظ البيانات بالكامل بنجاح", "success");
+        closeModal('add-session-modal');
+
+        // إعادة ضبط الاستمارات
+        document.getElementById('sess-title').value = '';
+        document.getElementById('sess-details').value = '';
+        document.getElementById('sess-homework').value = '';
+        document.getElementById('file-preview-name').innerText = '';
+        const oldAudio = document.querySelector('.recorder-box audio');
+        if(oldAudio) oldAudio.remove();
+        
+        window.state.currentFile = null;
+        window.state.currentAudioBlob = null;
+
+        if(window.state.currentSelectedStudentId) {
+            renderStudentTimeline(window.state.currentSelectedStudentId);
+        } else {
+            renderDashboardStats();
         }
 
-        function loadStateFromLocalStorage() {
-            const saved = localStorage.getItem('teacherflow_state');
-            if(saved) {
-                try {
-                    const parsed = JSON.parse(saved);
-                    if(parsed.students && parsed.sessions) {
-                        window.state = parsed;
-                    }
-                } catch(e) {
-                    console.log('LocalStorage load failed');
-                }
+    } catch(e) {
+        console.error(e);
+        showToast("حدث خطأ! قد يكون حجم الملف أو الصوت أكبر من 1 ميجابايت", "error");
+    }
+};
+
+window.deleteSession = async (sessionId) => {
+    if(confirm('هل تريد حذف هذه الحصة نهائياً؟')) {
+        try {
+            await deleteDoc(doc(db, "sessions", sessionId));
+            window.state.sessions = window.state.sessions.filter(s => s.id !== sessionId);
+
+            if(window.state.currentSelectedStudentId){
+                renderStudentTimeline(window.state.currentSelectedStudentId);
             }
+            renderDashboardStats();
+            showToast('تم حذف الجلسة بنجاح', 'success');
+        } catch(e) {
+            showToast("تعذر حذف الجلسة من السيرفر", "error");
         }
+    }
+};
 
-        loadStateFromLocalStorage();
+window.exportPDF = () => {
+    const student = window.state.students.find(s => s.id === window.state.currentSelectedStudentId);
+    if(student) {
+        showToast(`جاري تصدير ملف الطالب الاحترافي...`, "info");
+        setTimeout(() => {
+            alert(`[TeacherFlow Engine]\nتم توليد كشف الأداء بنجاح لـ ${student.name}.\nالملف جاهز للطباعة والمشاركة.`);
+        }, 1000);
+    }
+};
 
-        // حفظ تلقائي عند أي تعديل
-        const originalPushStudents = window.state.students.push.bind(window.state.students);
-        window.state.students.push = function(...args) {
-            const result = originalPushStudents(...args);
-            saveStateToLocalStorage();
-            return result;
-        };
+// السحب والإفلات للملفات
+const dropZone = document.getElementById('drop-zone');
+dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.style.background = 'rgba(79,70,229,0.1)'; });
+dropZone.addEventListener('dragleave', () => { dropZone.style.background = 'transparent'; });
+dropZone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    dropZone.style.background = 'transparent';
+    const file = e.dataTransfer.files[0];
+    if(file) {
+        window.state.currentFile = file;
+        document.getElementById('file-preview-name').innerText = `تم اختيار ملف: ${file.name}`;
+    }
+});
 
-        const originalPushSessions = window.state.sessions.push.bind(window.state.sessions);
-        window.state.sessions.push = function(...args) {
-            const result = originalPushSessions(...args);
-            saveStateToLocalStorage();
-            return result;
-        };
+// إغلاق المودال عند الضغط في الخارج
+document.querySelectorAll('.modal').forEach(modal => {
+    modal.addEventListener('click', (e) => { if(e.target === modal) modal.classList.remove('active'); });
+});
 
-        // دعم السحب والإفلات الحقيقي
-        const dropZone = document.getElementById('drop-zone');
+// إدارة تسجيل الصوت الحقيقي
+let mediaRecorder;
+let audioChunks = [];
 
-        dropZone.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            dropZone.style.background = 'rgba(79,70,229,0.1)';
-        });
+window.toggleAudioRecording = async () => {
+    const btn = document.getElementById('record-btn');
+    const visualizer = document.getElementById('wave-visualizer');
 
-        dropZone.addEventListener('dragleave', () => {
-            dropZone.style.background = 'transparent';
-        });
+    if(!window.state.isRecording) {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            mediaRecorder = new MediaRecorder(stream);
+            audioChunks = [];
 
-        dropZone.addEventListener('drop', (e) => {
-            e.preventDefault();
-            dropZone.style.background = 'transparent';
+            mediaRecorder.ondataavailable = event => audioChunks.push(event.data);
+            mediaRecorder.onstop = () => {
+                const audioBlob = new Blob(audioChunks, { type: 'audio/mp3' });
+                window.state.currentAudioBlob = audioBlob; 
 
-            const file = e.dataTransfer.files[0];
-            if(file) {
-                document.getElementById('file-preview-name').innerText =
-                `تم اختيار ملف: ${file.name}`;
-            }
-        });
+                const audioURL = URL.createObjectURL(audioBlob);
+                const audio = document.createElement('audio');
+                audio.controls = true;
+                audio.src = audioURL;
+                audio.style.width = '100%';
+                audio.style.marginTop = '15px';
 
-        // إغلاق النوافذ عند الضغط بالخارج
-        document.querySelectorAll('.modal').forEach(modal => {
-            modal.addEventListener('click', (e) => {
-                if(e.target === modal) {
-                    modal.classList.remove('active');
-                }
-            });
-        });
+                const recorderBox = document.querySelector('.recorder-box');
+                const oldAudio = recorderBox.querySelector('audio');
+                if(oldAudio) oldAudio.remove();
+                
+                recorderBox.appendChild(audio);
+                showToast("تم إعداد الملاحظة الصوتية، اضغط حفظ الحصة لرفعها", "success");
+            };
 
-        // تسجيل صوت حقيقي من الميكروفون
-        let mediaRecorder;
-        let audioChunks = [];
-
-        window.toggleAudioRecording = async () => {
-            const btn = document.getElementById('record-btn');
-            const visualizer = document.getElementById('wave-visualizer');
-
-            if(!window.state.isRecording) {
-                try {
-                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-
-                    mediaRecorder = new MediaRecorder(stream);
-                    audioChunks = [];
-
-                    mediaRecorder.ondataavailable = event => {
-                        audioChunks.push(event.data);
-                    };
-
-                    mediaRecorder.onstop = () => {
-                        const audioBlob = new Blob(audioChunks, { type: 'audio/mp3' });
-                        const audioURL = URL.createObjectURL(audioBlob);
-
-                        const audio = document.createElement('audio');
-                        audio.controls = true;
-                        audio.src = audioURL;
-                        audio.style.width = '100%';
-                        audio.style.marginTop = '15px';
-
-                        const recorderBox = document.querySelector('.recorder-box');
-                        recorderBox.appendChild(audio);
-
-                        showToast("تم حفظ التسجيل الصوتي بنجاح", "success");
-                    };
-
-                    mediaRecorder.start();
-
-                    window.state.isRecording = true;
-                    btn.innerHTML = `<i class="fas fa-stop"></i> إيقاف التسجيل`;
-                    btn.style.background = "#ef4444";
-                    btn.style.color = "white";
-                    visualizer.classList.add('active');
-
-                } catch(err) {
-                    showToast("المتصفح رفض إذن الميكروفون", "error");
-                }
-
-            } else {
-                mediaRecorder.stop();
-
-                window.state.isRecording = false;
-                btn.innerHTML = `<i class="fas fa-circle" style="color:red;"></i> ابدأ التسجيل الحي`;
-                btn.style.background = "transparent";
-                btn.style.color = "var(--brand-primary)";
-                visualizer.classList.remove('active');
-            }
-        };
+            mediaRecorder.start();
+            window.state.isRecording = true;
+            btn.innerHTML = `<i class="fas fa-stop"></i> إيقاف وحفظ التسجيل`;
+            btn.style.background = "#ef4444";
+            btn.style.color = "white";
+            visualizer.classList.add('active');
+        } catch(err) {
+            showToast("لم نتمكن من الوصول للميكروفون", "error");
+        }
+    } else {
+        mediaRecorder.stop();
+        window.state.isRecording = false;
+        btn.innerHTML = `<i class="fas fa-circle" style="color:red;"></i> ابدأ التسجيل الحي`;
+        btn.style.background = "transparent";
+        btn.style.color = "var(--brand-primary)";
+        visualizer.classList.remove('active');
+    }
+};
 
 </script>
 </body>
