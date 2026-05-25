@@ -1,1359 +1,700 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl" data-theme="light">
+<html lang="ar" dir="rtl">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TeacherFlow - منصة إدارة التعليم الذكي</title>
-    <!-- الخطوط والأيقونات والمكتبات -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="https://unpkg.com/aos@2.3.1/dist/aos.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
-
-    <style>
-        /* النظام اللوني والمتغيرات */
-        :root {
-            --brand-primary: #4f46e5;
-            --brand-secondary: #a855f7;
-            --brand-gradient: linear-gradient(135deg, var(--brand-primary), var(--brand-secondary));
-            --bg-base: #f8fafc;
-            --bg-surface: rgba(255, 255, 255, 0.45);
-            --border-color: rgba(255, 255, 255, 0.3);
-            --text-main: #0f172a;
-            --text-muted: #64748b;
-            --shadow-sm: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
-            --shadow-md: 0 10px 25px -5px rgba(79, 70, 229, 0.05);
-            --shadow-glass: 0 8px 32px 0 rgba(31, 38, 135, 0.06);
-            --radius-lg: 16px;
-            --radius-md: 12px;
-        }
-
-        [data-theme="dark"] {
-            --bg-base: #090d16;
-            --bg-surface: rgba(17, 24, 39, 0.6);
-            --border-color: rgba(255, 255, 255, 0.06);
-            --text-main: #f8fafc;
-            --text-muted: #94a3b8;
-            --shadow-md: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
-            --shadow-glass: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
-        }
-
-        /* الإعدادات العامة وإعادة التعيين */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Tajawal', sans-serif;
-            scroll-behavior: smooth;
-        }
-
-        body {
-            background-color: var(--bg-base);
-            color: var(--text-main);
-            overflow-x: hidden;
-            transition: background-color 0.4s cubic-bezier(0.4, 0, 0.2, 1), color 0.4s ease;
-        }
-
-        /* المكونات الزجاجية - Glassmorphism */
-        .glass {
-            background: var(--bg-surface);
-            backdrop-filter: blur(14px);
-            -webkit-backdrop-filter: blur(14px);
-            border: 1px solid var(--border-color);
-            box-shadow: var(--shadow-glass);
-        }
-
-        .btn {
-            padding: 10px 20px;
-            border-radius: var(--radius-md);
-            border: none;
-            cursor: pointer;
-            font-weight: 600;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        .btn-primary {
-            background: var(--brand-gradient);
-            color: white;
-            box-shadow: 0 4px 14px rgba(79, 70, 229, 0.3);
-        }
-
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(79, 70, 229, 0.4);
-        }
-
-        .btn-secondary {
-            background: transparent;
-            border: 1px solid var(--brand-primary);
-            color: var(--brand-primary);
-        }
-
-        /* التنبيهات المنبثقة - Toast Notifications */
-        #toast-container {
-            position: fixed;
-            top: 20px;
-            left: 20px;
-            z-index: 9999;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        .toast {
-            padding: 14px 24px;
-            border-radius: var(--radius-md);
-            color: white;
-            font-weight: 500;
-            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
-            animation: slideIn 0.3s ease forwards;
-        }
-
-        @keyframes slideIn {
-            from { transform: translateX(-100%); opacity: 0; }
-            to { transform: translateX(0); opacity: 1; }
-        }
-
-        /* هيكلية الصفحات والـ Views */
-        .app-view {
-            display: none;
-        }
-
-        .app-view.active {
-            display: block;
-        }
-
-        /* 1. تصميم الـ Landing Page */
-        #landing-view {
-            position: relative;
-        }
-
-        header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 20px 8%;
-            position: sticky;
-            top: 0;
-            z-index: 100;
-        }
-
-        .logo {
-            font-size: 24px;
-            font-weight: 800;
-            background: var(--brand-gradient);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        .hero-section {
-            padding: 100px 8% 60px 8%;
-            display: grid;
-            grid-template-columns: 1fr;
-            text-align: center;
-            max-width: 800px;
-            margin: 0 auto;
-        }
-
-        .hero-section h1 {
-            font-size: 48px;
-            font-weight: 900;
-            line-height: 1.3;
-            margin-bottom: 20px;
-        }
-
-        .hero-section p {
-            font-size: 18px;
-            color: var(--text-muted);
-            margin-bottom: 40px;
-        }
-
-        .features-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 30px;
-            padding: 60px 8%;
-        }
-
-        .feature-card {
-            padding: 30px;
-            border-radius: var(--radius-lg);
-            text-align: right;
-        }
-
-        .feature-card i {
-            font-size: 32px;
-            color: var(--brand-primary);
-            margin-bottom: 20px;
-        }
-
-        /* 2. تصميم الـ Dashboard المتكاملة */
-        #dashboard-layout {
-            display: flex;
-            min-height: 100vh;
-        }
-
-        sidebar {
-            width: 260px;
-            padding: 30px 20px;
-            display: flex;
-            flex-direction: column;
-            gap: 30px;
-            border-left: 1px solid var(--border-color);
-            transition: all 0.3s ease;
-        }
-
-        .sidebar-menu {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            list-style: none;
-        }
-
-        .sidebar-menu li a {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 14px;
-            color: var(--text-muted);
-            text-decoration: none;
-            font-weight: 500;
-            border-radius: var(--radius-md);
-            transition: all 0.2s ease;
-        }
-
-        .sidebar-menu li.active a, .sidebar-menu li a:hover {
-            background: var(--brand-gradient);
-            color: white;
-        }
-
-        .main-panel {
-            flex-grow: 1;
-            padding: 40px;
-            overflow-y: auto;
-            max-height: 100vh;
-        }
-
-        .top-navbar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 40px;
-        }
-
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 24px;
-            margin-bottom: 40px;
-        }
-
-        .stat-card {
-            padding: 24px;
-            border-radius: var(--radius-lg);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .stat-info h3 {
-            font-size: 28px;
-            font-weight: 700;
-            margin-top: 5px;
-        }
-
-        .stat-icon {
-            width: 50px;
-            height: 50px;
-            border-radius: var(--radius-md);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 20px;
-            background: rgba(79, 70, 229, 0.1);
-            color: var(--brand-primary);
-        }
-
-        /* 3. نافذة إضافة البيانات (Modals) */
-        .modal {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.4);
-            backdrop-filter: blur(4px);
-            display: none;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-        }
-
-        .modal.active {
-            display: flex;
-        }
-
-        .modal-content {
-            width: 100%;
-            max-width: 550px;
-            padding: 30px;
-            border-radius: var(--radius-lg);
-            position: relative;
-        }
-
-        .form-group {
-            margin-bottom: 20px;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 500;
-            font-size: 14px;
-        }
-
-        .form-control {
-            width: 100%;
-            padding: 12px;
-            border-radius: var(--radius-md);
-            border: 1px solid var(--border-color);
-            background: transparent;
-            color: var(--text-main);
-        }
-
-        /* 4. إدارة الطلاب والبطاقات التفاعلية */
-        .students-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            gap: 24px;
-        }
-
-        .student-card {
-            padding: 24px;
-            border-radius: var(--radius-lg);
-            text-align: center;
-            position: relative;
-            cursor: pointer;
-        }
-
-        .student-avatar {
-            width: 80px;
-            height: 80px;
-            border-radius: 50%;
-            background: var(--brand-gradient);
-            margin: 0 auto 16px auto;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 28px;
-            font-weight: bold;
-        }
-
-        .student-badge {
-            position: absolute;
-            top: 15px; left: 15px;
-            padding: 4px 10px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 600;
-            background: rgba(16, 185, 129, 0.15);
-            color: #10b981;
-        }
-
-        /* 5. الـ Timeline وجلسات الطلاب */
-        .timeline {
-            position: relative;
-            padding-right: 20px;
-            border-right: 2px solid var(--border-color);
-            margin-top: 30px;
-        }
-
-        .timeline-item {
-            position: relative;
-            margin-bottom: 30px;
-        }
-
-        .timeline-item::before {
-            content: '';
-            position: absolute;
-            top: 5px; right: -27px;
-            width: 12px; height: 12px;
-            border-radius: 50%;
-            background: var(--brand-primary);
-        }
-
-        /* مسجل الصوت التفاعلي والـ Waves */
-        .recorder-box {
-            padding: 20px;
-            border-radius: var(--radius-md);
-            margin-top: 15px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-
-        .wave-container {
-            display: flex;
-            gap: 4px;
-            height: 30px;
-            align-items: center;
-        }
-
-        .wave-bar {
-            width: 3px;
-            height: 8px;
-            background: var(--brand-primary);
-            border-radius: 3px;
-        }
-
-        .wave-container.active .wave-bar {
-            animation: bounce 0.5s ease infinite alternate;
-        }
-
-        @keyframes bounce {
-            from { height: 6px; }
-            to { height: 28px; }
-        }
-
-        /* مفتاح التحكم بالوضع الليلي */
-        .theme-toggle {
-            cursor: pointer;
-            width: 40px; height: 40px;
-            border-radius: 50%;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 18px;
-        }
-    
-        /* تحسينات مهمة للتشغيل */
-        img {
-            max-width: 100%;
-        }
-
-        .sub-view {
-            animation: fadeIn 0.35s ease;
-        }
-
-        @keyframes fadeIn {
-            from {opacity:0; transform: translateY(10px);}
-            to {opacity:1; transform: translateY(0);}
-        }
-
-        .empty-state {
-            text-align: center;
-            padding: 40px;
-            color: var(--text-muted);
-        }
-
-        .student-card:hover,
-        .feature-card:hover,
-        .stat-card:hover {
-            transform: translateY(-5px);
-        }
-
-        .student-card,
-        .feature-card,
-        .stat-card {
-            transition: 0.3s ease;
-        }
-
-        @media (max-width: 992px) {
-            #dashboard-layout {
-                flex-direction: column;
-            }
-
-            sidebar {
-                width: 100%;
-                flex-direction: row;
-                justify-content: space-between;
-                align-items: center;
-                padding: 15px;
-            }
-
-            .sidebar-menu {
-                flex-direction: row;
-                flex-wrap: wrap;
-            }
-
-            .main-panel {
-                padding: 20px;
-            }
-
-            #profile-details-card,
-            .stats-grid,
-            .students-grid,
-            .features-grid,
-            .hero-section,
-            .top-navbar,
-            .main-panel > div {
-                grid-template-columns: 1fr !important;
-            }
-        }
-
-        @media (max-width: 768px) {
-            .hero-section h1 {
-                font-size: 34px;
-            }
-
-            .top-navbar {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 15px;
-            }
-
-            .btn {
-                width: 100%;
-                justify-content: center;
-            }
-        }
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+
+<title>لوحة المعلم</title>
+
+<style>
+
+*{
+  box-sizing:border-box;
+}
+
+body{
+  margin:0;
+  font-family:Arial;
+  background:#f3f4f6;
+}
+
+.container{
+  max-width:1100px;
+  margin:auto;
+  padding:20px;
+}
+
+h1{
+  text-align:center;
+}
+
+.tabs{
+  display:flex;
+  gap:10px;
+  margin-bottom:20px;
+}
+
+.tabs button{
+  flex:1;
+}
+
+button{
+  border:none;
+  padding:12px;
+  border-radius:12px;
+  cursor:pointer;
+  font-size:15px;
+}
+
+.primary{
+  background:#2563eb;
+  color:white;
+}
+
+.danger{
+  background:#dc2626;
+  color:white;
+}
+
+.card{
+  background:white;
+  padding:15px;
+  border-radius:18px;
+  margin-bottom:15px;
+  box-shadow:0 2px 10px rgba(0,0,0,0.08);
+}
+
+.modal{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,0.5);
+  display:none;
+  justify-content:center;
+  align-items:center;
+  z-index:999;
+}
+
+.modal-content{
+  background:white;
+  width:95%;
+  max-width:600px;
+  padding:20px;
+  border-radius:20px;
+  max-height:90vh;
+  overflow:auto;
+}
+
+input,
+textarea,
+select{
+  width:100%;
+  padding:12px;
+  margin-bottom:10px;
+  border-radius:12px;
+  border:1px solid #ccc;
+  font-size:15px;
+}
+
+textarea{
+  min-height:100px;
+  resize:vertical;
+}
+
+.actions{
+  display:flex;
+  gap:10px;
+}
+
+.drop-zone{
+  border:2px dashed #999;
+  padding:25px;
+  text-align:center;
+  border-radius:15px;
+  background:#fafafa;
+  margin-bottom:15px;
+  cursor:pointer;
+}
+
+.images-preview{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+  margin-bottom:15px;
+}
+
+.images-preview img{
+  width:100px;
+  height:100px;
+  object-fit:cover;
+  border-radius:10px;
+}
+
+.tab{
+  display:none;
+}
+
+.active{
+  display:block;
+}
+
+audio{
+  width:100%;
+  margin-top:10px;
+}
+
+.small{
+  font-size:14px;
+  color:#555;
+}
 
 </style>
 </head>
+
 <body>
 
-    <!-- حاوي التنبيهات -->
-    <div id="toast-container"></div>
+<div class="container">
 
-    <!-- ========================================== -->
-    <!-- 1. VIEW: LANDING PAGE & AUTHENTICATION -->
-    <!-- ========================================== -->
-    <div id="landing-view" class="app-view" style="display:none;">
-        <header class="glass">
-            <div class="logo">TeacherFlow</div>
-            <div style="display: flex; gap: 15px; align-items: center;">
-                <div class="theme-toggle glass" onclick="toggleTheme()"><i class="fas fa-moon"></i></div>
-                <button class="btn btn-primary" onclick="openAuthModal()">دخول لوحة التحكم</button>
-            </div>
-        </header>
+<h1>لوحة المعلم</h1>
 
-        <section class="hero-section" data-aos="zoom-in">
-            <h1>إدارة طلابك وحصصك الأونلاين أصبحت <span style="color: var(--brand-primary);">أكثر انسيابية</span></h1>
-            <p>منصة شاملة وبسيطة مصممة خصيصاً للمعلمين المستقلين لمتابعة تقدم الطلاب، جدولة الحصص، وأرشفة الملفات والملاحظات الصوتية بتجربة بصرية فريدة.</p>
-            <div>
-                <button class="btn btn-primary" style="width: 100%; justify-content: center; margin-bottom: 15px;" onclick="enterDemoMode()">تسجيل الدخول</button>
-                <button class="btn btn-secondary" style="width: 100%; justify-content: center;" onclick="loginWithGoogle()">
-                    <i class="fab fa-google"></i> الدخول بواسطة Google
-                </button>
-            </div>
-        </section>
+<div class="tabs">
+  <button class="primary" onclick="showTab('studentsTab')">
+    الطلاب
+  </button>
 
-        <div class="features-grid">
-            <div class="feature-card glass" data-aos="fade-up" data-aos-delay="100">
-                <i class="fas fa-user-graduates"></i>
-                <h3>ملفات الطلاب الشاملة</h3>
-                <p>سجل تفاصيل ومستويات وأهداف كل طالب، مع جدول زمني دقيق لكل حصة وما جرى فيها تلقائياً.</p>
-            </div>
-            <div class="feature-card glass" data-aos="fade-up" data-aos-delay="200">
-                <i class="fas fa-microphone-alt"></i>
-                <h3>الملاحظات الصوتية الفورية</h3>
-                <p>سجل التوجيهات الصوتية ونطق الحروف مباشرة من متصفحك واربطها بحصة الطالب بضغطة زر واحدة.</p>
-            </div>
-            <div class="feature-card glass" data-aos="fade-up" data-aos-delay="300">
-                <i class="fas fa-chart-pie"></i>
-                <h3>تقارير وتحليلات ذكية</h3>
-                <p>شاهد مستوى الالتزام والتقدم المعرفي عبر رسوم بيانية تفاعلية تساعدك على تحسين خطتك التعليمية.</p>
-            </div>
-        </div>
-    </div>
+  <button class="primary" onclick="showTab('sessionsTab')">
+    الحصص
+  </button>
+</div>
 
-    <!-- نافذة تسجيل الدخول والربط -->
-    <div id="auth-modal" class="modal">
-        <div class="modal-content glass">
-            <h2 style="margin-bottom: 20px; text-align: center;">تسجيل الدخول إلى حسابك</h2>
-            <div class="form-group">
-                <label>البريد الإلكتروني</label>
-                <input type="email" id="auth-email" class="form-control" placeholder="name@example.com">
-            </div>
-            <div class="form-group">
-                <label>كلمة المرور</label>
-                <input type="password" id="auth-pass" class="form-control" placeholder="••••••••">
-            </div>
-            <button class="btn btn-primary" style="width: 100%; justify-content: center; margin-bottom: 15px;" onclick="enterDemoMode()">تسجيل الدخول</button>
-            <button class="btn btn-secondary" style="width: 100%; justify-content: center;" onclick="enterDemoMode()">
-                <i class="fab fa-google"></i> الدخول بواسطة Google
-            </button>
-            <button class="btn" style="position: absolute; top: 15px; left: 15px;" onclick="closeAuthModal()"><i class="fas fa-times"></i></button>
-        </div>
-    </div>
+<!-- الطلاب -->
 
+<div id="studentsTab" class="tab active">
 
-    <!-- ========================================== -->
-    <!-- 2. MAIN CORE APPLICATION LAYOUT (SPA) -->
-    <!-- ========================================== -->
-    <div id="dashboard-layout" class="app-view active">
-        <sidebar class="glass">
-            <div class="logo">TeacherFlow</div>
-            <ul class="sidebar-menu">
-                <li class="active" id="menu-dash"><a href="#" onclick="switchSubView('main-dash')"><i class="fas fa-home"></i> الرئيسة</a></li>
-                <li id="menu-students"><a href="#" onclick="switchSubView('students-list')"><i class="fas fa-user-friends"></i> الطلاب</a></li>
-                
-            </ul>
-            <div style="margin-top: auto; display: flex; flex-direction: column; gap: 10px;">
-                <div class="theme-toggle glass" onclick="toggleTheme()" style="margin: 0 auto;"><i class="fas fa-moon"></i></div>
-                <button class="btn btn-secondary" onclick="logout()"><i class="fas fa-sign-out-alt"></i> خروج</button>
-            </div>
-        </sidebar>
+<button class="primary" onclick="openStudentModal()">
+إضافة طالب
+</button>
 
-        <div class="main-panel">
-            <!-- الهيدر العلوي لداخل التطبيق -->
-            <div class="top-navbar">
-                <div>
-                    <h2 id="navbar-title">لوحة التحكم الإحصائية</h2>
-                    <p style="color: var(--text-muted); font-size: 14px;" id="current-date-string"></p>
-                </div>
-                <div style="display: flex; gap: 15px;">
-                    <button class="btn btn-primary" id="quick-action-btn" onclick="openAddStudentModal()"><i class="fas fa-plus"></i> إضافة طالب جديد</button>
-                </div>
-            </div>
+<br><br>
 
-            <!-- SUB VIEW: MAIN DASHBOARD OVERVIEW -->
-            <div id="subview-main-dash" class="sub-view" style="display: block;">
-                <div class="stats-grid">
-                    <div class="stat-card glass">
-                        <div class="stat-info">
-                            <p style="color: var(--text-muted);">إجمالي الطلاب</p>
-                            <h3 id="stat-students-count">0</h3>
-                        </div>
-                        <div class="stat-icon"><i class="fas fa-users"></i></div>
-                    </div>
-                    <div class="stat-card glass">
-                        <div class="stat-info">
-                            <p style="color: var(--text-muted);">حصص هذا الأسبوع</p>
-                            <h3 id="stat-sessions-count">0</h3>
-                        </div>
-                        <div class="stat-icon"><i class="fas fa-graduation-cap"></i></div>
-                    </div>
-                    <div class="stat-card glass">
-                        <div class="stat-info">
-                            <p style="color: var(--text-muted);">نسبة التزام الطلاب</p>
-                            <h3>94%</h3>
-                        </div>
-                        <div class="stat-icon"><i class="fas fa-chart-line"></i></div>
-                    </div>
-                </div>
+<div id="studentsList"></div>
 
-                <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 30px; margin-top: 30px;">
-                    <div class="glass" style="padding: 24px; border-radius: var(--radius-lg); height: 350px;">
-                        <h3 style="margin-bottom: 20px;">معدل الساعات التعليمية الأسبوعية</h3>
-                        <canvas id="analyticsChart" style="max-height: 260px;"></canvas>
-                    </div>
-                    <div class="glass" style="padding: 24px; border-radius: var(--radius-lg);">
-                        <h3 style="margin-bottom: 20px;">العمليات السريعة</h3>
-                        <div style="display: flex; flex-direction: column; gap: 12px;">
-                            <button class="btn btn-secondary" style="justify-content: center;" onclick="switchSubView('students-list')"><i class="fas fa-search"></i> بحث عن طالب</button>
-                            <button class="btn btn-primary" style="justify-content: center;" onclick="openAddSessionModalGlobal()"><i class="fas fa-calendar-plus"></i> تسجيل حصة فورية</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
+</div>
 
-            <!-- SUB VIEW: STUDENTS LIST MANAGEMENT -->
-            <div id="subview-students-list" class="sub-view" style="display: none;">
-                <div style="margin-bottom: 25px; display: flex; gap: 15px;">
-                    <input type="text" id="search-student" class="form-control" placeholder="ابحث باسم الطالب أو المستوى التعليمي..." oninput="filterStudents()">
-                </div>
-                <div class="students-grid" id="students-cards-container">
-                    <!-- كروت الطلاب تُحقن هنا برمجياً بـ Vanilla JS -->
-                </div>
-            </div>
+<!-- الحصص -->
 
-            <!-- SUB VIEW: STUDENT INDIVIDUAL PROFILE & TIMELINE -->
-            <div id="subview-student-profile" class="sub-view" style="display: none;">
-                <button class="btn btn-secondary" style="margin-bottom: 20px;" onclick="switchSubView('students-list')"><i class="fas fa-arrow-right"></i> العودة للكل</button>
-                <div id="profile-details-card" class="glass" style="padding: 30px; border-radius: var(--radius-lg); display: grid; grid-template-columns: 100px 1fr 1fr; gap: 20px; align-items: center;">
-                    <!-- تفاصيل الطالب الفردي المختار يتم حقنها هنا -->
-                </div>
+<div id="sessionsTab" class="tab">
 
-                <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 30px; margin-top: 40px;">
-                    <div>
-                        <div style="display: flex; justify-content: space-between; align-items: center;">
-                            <h3>سجل الجلسات والحصص السابقة (Timeline)</h3>
-                            <button class="btn btn-primary btn-sm" onclick="openAddSessionModal()"><i class="fas fa-plus"></i> إضافة حصة لهذا الطالب</button>
-                        </div>
-                        <div class="timeline" id="sessions-timeline-container">
-                            <!-- التايم لاين يُحقن هنا -->
-                        </div>
-                    </div>
-                    <div>
-                        <h3>التقارير والملاحظات المرفوعة</h3>
-                        <div class="glass" style="padding: 20px; border-radius: var(--radius-md); margin-top: 20px;">
-                            <p style="font-weight: bold; margin-bottom: 10px;">تحميل كشف المتابعة الشامل</p>
-                            <button class="btn btn-secondary" style="width: 100%; justify-content: center;" onclick="exportPDF()"><i class="fas fa-file-pdf"></i> تصدير التقرير الحالي كـ PDF</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
+<button class="primary" onclick="openSessionModal()">
+إضافة حصة
+</button>
 
-            </div>
-        </div>
-    </div>
-        </div>
-    </div>
+<br><br>
 
-    <!-- نافذة إضافة طالب جديد -->
-    <div id="add-student-modal" class="modal">
-        <div class="modal-content glass">
-            <h3 style="margin-bottom: 20px;">إضافة بيانات طالب جديد</h3>
-            <div class="form-group">
-                <label>اسم الطالب الكامل</label>
-                <input type="text" id="stud-name" class="form-control" required>
-            </div>
-            <div class="form-group">
-                <label>المستوى الدراسي / العمري</label>
-                <input type="text" id="stud-level" class="form-control" placeholder="مثال: متوسط، متقدم، طفل">
-            </div>
-            <div class="form-group">
-                <label>الهدف من التعلم</label>
-                <input type="text" id="stud-target" class="form-control" placeholder="مثال: إتقان نطق، محادثة أعمال">
-            </div>
-            <div class="form-group">
-                <label>ملاحظات أولية</label>
-                <textarea id="stud-notes" class="form-control" rows="3"></textarea>
-            </div>
-            <button class="btn btn-primary" style="width: 100%; justify-content: center;" onclick="saveStudentData()">حفظ الطالب في النظام</button>
-            <button class="btn" style="position: absolute; top: 15px; left: 15px;" onclick="closeModal('add-student-modal')"><i class="fas fa-times"></i></button>
-        </div>
-    </div>
+<div id="sessionsList"></div>
 
-    <!-- نافذة إضافة حصة جديدة لشخص محدد أو عام -->
-    <div id="add-session-modal" class="modal">
-        <div class="modal-content glass" style="max-width: 650px;">
-            <h3 style="margin-bottom: 20px;">تسجيل وتوثيق حصة تعليمية</h3>
-            <div class="form-group" id="student-select-group" style="display:none;">
-                <label>اختيار الطالب</label>
-                <select id="session-student-select" class="form-control"></select>
-            </div>
-            <div class="form-group">
-                <label>عنوان أو موضوع الحصة الرئيسية</label>
-                <input type="text" id="sess-title" class="form-control" placeholder="مثال: مخارج الحروف الشجرية">
-            </div>
-            <div class="form-group">
-                <label>ما تم شرحه بالتفصيل</label>
-                <textarea id="sess-details" class="form-control" rows="3"></textarea>
-            </div>
-            
-            <div class="form-group">
-                <label>مدة الحصة</label>
-                <select id="sess-duration" class="form-control">
-                    <option value="0.5">نصف ساعة</option>
-                    <option value="1" selected>ساعة كاملة</option>
-                    <option value="1.5">ساعة ونصف</option>
-                    <option value="2">ساعتان</option>
-                </select>
-            </div>
+</div>
 
-            <div class="form-group">
-                <label>الواجب والتكليفات المطلوبة</label>
+</div>
 
-                <input type="text" id="sess-homework" class="form-control">
-            </div>
-            
-            <!-- أداة مسجل الصوت الذكي -->
-            <div class="form-group">
-                <label><i class="fas fa-microphone"></i> الملاحظات والنطق الصوتي</label>
-                <div class="recorder-box glass">
-                    <button class="btn btn-secondary" id="record-btn" onclick="toggleAudioRecording()"><i class="fas fa-circle" style="color:red;"></i> ابدأ التسجيل الحي</button>
-                    <div class="wave-container" id="wave-visualizer">
-                        <div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div>
-                    </div>
-                </div>
-            </div>
+<!-- مودال الطالب -->
 
-            <!-- منطقة رفع لقطات الشاشة والملفات سحب وإفلات -->
-            <div class="form-group">
-                <label><i class="fas fa-cloud-upload-alt"></i> لقطات شاشة الدرس والملفات المرفقة</label>
-                <div id="drop-zone" style="border: 2px dashed var(--brand-primary); border-radius: var(--radius-md); padding: 20px; text-align: center; cursor: pointer; transition: background 0.2s;" onclick="triggerFileSelect()">
-                    <p style="color: var(--text-muted);">اسحب وأفلت لقطات الدرس (Screenshots/PDF) أو اضغط هنا للتصفح</p>
-                    <input type="file" id="file-input" style="display: none;" onchange="handleFileSelect(event)">
-                    <div id="file-preview-name" style="margin-top:10px; font-weight:bold; color:var(--brand-primary);"></div>
-                </div>
-            </div>
+<div class="modal" id="studentModal">
 
-            <button class="btn btn-primary" style="width: 100%; justify-content: center;" onclick="saveSessionData()">توثيق وحفظ الجلسة تلقائياً</button>
-            <button class="btn" style="position: absolute; top: 15px; left: 15px;" onclick="closeModal('add-session-modal')"><i class="fas fa-times"></i></button>
-        </div>
-    </div>
+<div class="modal-content">
 
+<h2>إضافة طالب</h2>
 
-    <!-- ========================================== -->
-    <!-- 3. JAVASCRIPT SYSTEM ENGINE (VANILLA CORE) -->
-    <!-- ========================================== -->
-    <script type="module">
-    // ==========================================
-// 3. JAVASCRIPT SYSTEM ENGINE (FIRESTORE ONLY)
-// ==========================================
+<input id="studentName" placeholder="اسم الطالب">
 
-// استدعاء مكتبات Firebase الحديثة (تم إزالة Storage بالكامل)
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getAuth, signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-import { getFirestore, collection, addDoc, getDocs, doc, deleteDoc, query, where } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+<input id="studentGoal" placeholder="الهدف">
 
-// ضع بيانات مشروعك الحقيقية هنا من 콘솔 Firebase
+<input id="studentLevel" placeholder="المستوى">
+
+<textarea id="studentMethod" placeholder="طريقة التدريس"></textarea>
+
+<textarea id="studentNotes" placeholder="ملاحظات"></textarea>
+
+<div class="actions">
+
+<button class="primary" onclick="saveStudent()">
+حفظ
+</button>
+
+<button onclick="closeStudentModal()">
+إلغاء
+</button>
+
+</div>
+
+</div>
+
+</div>
+
+<!-- مودال الحصة -->
+
+<div class="modal" id="sessionModal">
+
+<div class="modal-content">
+
+<h2>إضافة حصة</h2>
+
+<select id="sessionStudent"></select>
+
+<textarea id="lessonContent" placeholder="ماذا تم في الحصة"></textarea>
+
+<textarea id="homeworkContent" placeholder="الواجب"></textarea>
+
+<input type="datetime-local" id="sessionDate">
+
+<div class="drop-zone" id="dropZone">
+اسحب الصور هنا أو اضغط للاختيار
+</div>
+
+<input type="file" id="imageInput" multiple hidden accept="image/*">
+
+<div class="images-preview" id="imagesPreview"></div>
+
+<div class="actions">
+
+<button class="primary" onclick="startRecording()">
+تسجيل صوت
+</button>
+
+<button onclick="stopRecording()">
+إيقاف
+</button>
+
+</div>
+
+<br>
+
+<audio id="audioPreview" controls></audio>
+
+<br><br>
+
+<div class="actions">
+
+<button class="primary" onclick="saveSession()">
+حفظ الحصة
+</button>
+
+<button onclick="closeSessionModal()">
+إلغاء
+</button>
+
+</div>
+
+</div>
+
+</div>
+
+<script type="module">
+
+import { initializeApp }
+from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+
+import {
+  getFirestore,
+  collection,
+  addDoc,
+  getDocs,
+  deleteDoc,
+  doc
+}
+from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+import {
+  getStorage,
+  ref,
+  uploadBytes,
+  getDownloadURL
+}
+from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
+
 const firebaseConfig = {
-    apiKey: "PLACEHOLDER",
-    authDomain: "PLACEHOLDER",
-    projectId: "PLACEHOLDER",
-    storageBucket: "PLACEHOLDER",
-    messagingSenderId: "PLACEHOLDER",
-    appId: "PLACEHOLDER"
+
+  apiKey: "ضع apiKey",
+
+  authDomain: "ضع authDomain",
+
+  projectId: "ضع projectId",
+
+  storageBucket: "ضع storageBucket",
+
+  messagingSenderId: "ضع messagingSenderId",
+
+  appId: "ضع appId"
+
 };
 
-// تهيئة خدمات Firebase
 const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
+
 const db = getFirestore(app);
 
-// الذاكرة المؤقتة للتطبيق (State) واحتواء الملفات قبل الرفع
-window.state = {
-    students: [],
-    sessions: [],
-    currentSelectedStudentId: null,
-    isRecording: false,
-    currentAudioBlob: null, 
-    currentFile: null       
+const storage = getStorage(app);
+
+window.showTab = function(tab){
+
+  document.querySelectorAll(".tab")
+  .forEach(el => el.classList.remove("active"));
+
+  document.getElementById(tab)
+  .classList.add("active");
 };
 
-// تفعيل مكتبة ظهور العناصر الرسومية AOS
-AOS.init({ duration: 800, once: true });
+window.openStudentModal = function(){
+  studentModal.style.display = "flex";
+};
 
-// تهيئة الرسم البياني Chart.js
-let ctx = document.getElementById('analyticsChart').getContext('2d');
-window.analyticsChart = new Chart(ctx, {
-    type: 'line',
-    data: {
-        labels: ['الأسبوع 1', 'الأسبوع 2', 'الأسبوع 3', 'الأسبوع 4'],
-        datasets: [{
-            label: 'ساعات الشرح والتدريس',
-            data: [0, 0, 0, 0],
-            borderColor: '#4f46e5',
-            backgroundColor: 'rgba(79, 70, 229, 0.08)',
-            fill: true,
-            tension: 0.4,
-            borderWidth: 3
-        }]
-    },
-    options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: { legend: { display: false } },
-        scales: { y: { grid: { display: false } }, x: { grid: { display: false } } }
-    }
+window.closeStudentModal = function(){
+  studentModal.style.display = "none";
+};
+
+window.openSessionModal = function(){
+  sessionModal.style.display = "flex";
+};
+
+window.closeSessionModal = function(){
+  sessionModal.style.display = "none";
+};
+
+window.saveStudent = async function(){
+
+  const data = {
+
+    name: studentName.value,
+
+    goal: studentGoal.value,
+
+    level: studentLevel.value,
+
+    method: studentMethod.value,
+
+    notes: studentNotes.value
+
+  };
+
+  await addDoc(collection(db,"students"),data);
+
+  closeStudentModal();
+
+  clearStudentFields();
+
+  loadStudents();
+};
+
+function clearStudentFields(){
+
+  studentName.value = "";
+
+  studentGoal.value = "";
+
+  studentLevel.value = "";
+
+  studentMethod.value = "";
+
+  studentNotes.value = "";
+}
+
+async function loadStudents(){
+
+  const snapshot =
+  await getDocs(collection(db,"students"));
+
+  studentsList.innerHTML = "";
+
+  sessionStudent.innerHTML = "";
+
+  snapshot.forEach(item => {
+
+    const data = item.data();
+
+    studentsList.innerHTML += `
+
+    <div class="card">
+
+      <h3>${data.name}</h3>
+
+      <p><b>الهدف:</b> ${data.goal}</p>
+
+      <p><b>المستوى:</b> ${data.level}</p>
+
+      <p><b>طريقة التدريس:</b> ${data.method}</p>
+
+      <p><b>الملاحظات:</b> ${data.notes}</p>
+
+      <button class="danger"
+      onclick="deleteStudent('${item.id}')">
+
+      حذف
+
+      </button>
+
+    </div>
+
+    `;
+
+    sessionStudent.innerHTML += `
+
+    <option value="${data.name}">
+      ${data.name}
+    </option>
+
+    `;
+  });
+}
+
+window.deleteStudent = async function(id){
+
+  await deleteDoc(doc(db,"students",id));
+
+  loadStudents();
+};
+
+let selectedFiles = [];
+
+dropZone.onclick = () => {
+
+  imageInput.click();
+};
+
+imageInput.addEventListener("change",(e)=>{
+
+  selectedFiles = [...e.target.files];
+
+  renderImages();
 });
 
-// ==========================================
-// دالة مساعدة لتحويل الملفات والصوت إلى Base64
-// ==========================================
-function convertToBase64(fileOrBlob) {
-    return new Promise((resolve, reject) => {
-        if (!fileOrBlob) return resolve(null);
-        const reader = new FileReader();
-        reader.readAsDataURL(fileOrBlob);
-        reader.onload = () => resolve(reader.result);
-        reader.onerror = (error) => reject(error);
-    });
-}
+dropZone.addEventListener("dragover",(e)=>{
 
-// مراقب حالة تسجيل الدخول
-onAuthStateChanged(auth, async (user) => {
-    if (user) {
-        showToast("جاري مزامنة بياناتك السحابية...", "info");
-        await loadDataFromFirebase(user.uid);
-        
-        document.getElementById('landing-view').style.display = 'none';
-        document.getElementById('dashboard-layout').className = "app-view active";
-        document.getElementById('current-date-string').innerText = new Date().toLocaleDateString('ar-EG', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-    } else {
-        document.getElementById('dashboard-layout').classList.remove('active');
-        document.getElementById('landing-view').style.display = 'block';
-    }
+  e.preventDefault();
 });
 
-// دالة تحميل البيانات من Firestore
-async function loadDataFromFirebase(userId) {
-    try {
-        const qStudents = query(collection(db, "students"), where("userId", "==", userId));
-        const snapStudents = await getDocs(qStudents);
-        window.state.students = [];
-        snapStudents.forEach(doc => window.state.students.push({ id: doc.id, ...doc.data() }));
+dropZone.addEventListener("drop",(e)=>{
 
-        const qSessions = query(collection(db, "sessions"), where("userId", "==", userId));
-        const snapSessions = await getDocs(qSessions);
-        window.state.sessions = [];
-        snapSessions.forEach(doc => window.state.sessions.push({ id: doc.id, ...doc.data() }));
+  e.preventDefault();
 
-        renderDashboardStats();
-    } catch (error) {
-        showToast("حدث خطأ أثناء تحميل البيانات"، "error");
-        console.error(error);
-    }
-}
+  selectedFiles = [...e.dataTransfer.files];
 
-// التحكم بالنوافذ المنبثقة
-window.openAuthModal = () => document.getElementById('auth-modal').classList.add('active');
-window.closeAuthModal = () => document.getElementById('auth-modal').classList.remove('active');
-window.openAddStudentModal = () => document.getElementById('add-student-modal').classList.add('active');
-window.closeModal = (id) => document.getElementById(id).classList.remove('active');
+  renderImages();
+});
 
-// تسجيل الدخول بالبريد والباسورد
-window.enterDemoMode = async () => {
-    const email = document.getElementById('auth-email').value.trim();
-    const pass = document.getElementById('auth-pass').value.trim();
-    
-    if(!email || !pass) {
-        showToast("يرجى إدخال البريد الإلكتروني وكلمة المرور", "error");
-        return;
-    }
-    try {
-        await signInWithEmailAndPassword(auth, email, pass);
-        closeAuthModal();
-    } catch(e) {
-        showToast("فشل تسجيل الدخول: " + e.message, "error");
-    }
-};
+function renderImages(){
 
-// تسجيل الدخول عبر Google
-window.loginWithGoogle = async () => {
-    const provider = new GoogleAuthProvider();
-    try {
-        await signInWithPopup(auth, provider);
-        closeAuthModal();
-    } catch(e) {
-        showToast("فشل الاتصال بـ Google: " + e.message, "error");
-    }
-};
+  imagesPreview.innerHTML = "";
 
-window.logout = async () => {
-    try {
-        await signOut(auth);
-        showToast("تم تسجيل الخروج بنجاح", "info");
-    } catch (e) {
-        showToast("تعذر تسجيل الخروج", "error");
-    }
-};
+  selectedFiles.forEach(file=>{
 
-// تبديل الواجهات الداخلية
-window.switchSubView = (targetViewId) => {
-    document.querySelectorAll('.sub-view').forEach(view => view.style.display = 'none');
-    document.querySelectorAll('.sidebar-menu li').forEach(li => li.classList.remove('active'));
-    
-    const selectedView = document.getElementById(`subview-${targetViewId}`);
-    if (selectedView) selectedView.style.display = 'block';
+    const reader = new FileReader();
 
-    const titleElement = document.getElementById('navbar-title');
-    const quickActionBtn = document.getElementById('quick-action-btn');
+    reader.onload = function(e){
 
-    if (targetViewId === 'main-dash') {
-        titleElement.innerText = "لوحة التحكم الإحصائية";
-        quickActionBtn.style.display = "inline-flex";
-        quickActionBtn.innerHTML = `<i class="fas fa-plus"></i> إضافة طالب جديد`;
-        quickActionBtn.setAttribute('onclick', 'openAddStudentModal()');
-        document.getElementById('menu-dash').classList.add('active');
-        renderDashboardStats();
-    } else if (targetViewId === 'students-list') {
-        titleElement.innerText = "دليل وإدارة الطلاب";
-        quickActionBtn.style.display = "inline-flex";
-        quickActionBtn.innerHTML = `<i class="fas fa-user-plus"></i> طالب جديد`;
-        quickActionBtn.setAttribute('onclick', 'openAddStudentModal()');
-        document.getElementById('menu-students').classList.add('active');
-        renderStudentsCards();
-    } else if (targetViewId === 'student-profile') {
-        titleElement.innerText = "الملف التعليمي للطالب";
-        quickActionBtn.style.display = "none";
-    }
-};
-
-window.toggleTheme = () => {
-    const currentTheme = document.documentElement.getAttribute('data-theme');
-    const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-    document.documentElement.setAttribute('data-theme', newTheme);
-    document.querySelectorAll('.theme-toggle i').forEach(i => i.className = newTheme === 'dark' ? 'fas fa-sun' : 'fas fa-moon');
-    showToast(`تم تفعيل الوضع ${newTheme === 'dark' ? 'الليلي' : 'النهاري'}`, "info");
-};
-
-window.showToast = (message, type = "success") => {
-    const container = document.getElementById('toast-container');
-    const toast = document.createElement('div');
-    toast.className = `toast glass`;
-    toast.style.background = type === "success" ? "#10b981" : type === "error" ? "#ef4444" : "#4f46e5";
-    toast.innerText = message;
-    container.appendChild(toast);
-    setTimeout(() => toast.remove(), 4500);
-};
-
-function updateAnalyticsChart() {
-    const totalHours = window.state.sessions.reduce((sum, s) => sum + (s.duration || 0), 0);
-    analyticsChart.data.datasets[0].data = [totalHours * 0.25, totalHours * 0.5, totalHours * 0.75, totalHours];
-    analyticsChart.update();
-}
-
-function renderDashboardStats() {
-    document.getElementById('stat-students-count').innerText = window.state.students.length;
-    document.getElementById('stat-sessions-count').innerText = window.state.sessions.length;
-    updateAnalyticsChart();
-}
-
-function renderStudentsCards() {
-    const container = document.getElementById('students-cards-container');
-    container.innerHTML = '';
-    
-    if(window.state.students.length === 0) {
-        container.innerHTML = `<div style="grid-column: 1/-1; text-align:center; padding:40px; color:var(--text-muted);">لا يوجد طلاب مسجلين حالياً.</div>`;
-        return;
-    }
-
-    window.state.students.forEach(st => {
-        const count = window.state.sessions.filter(s => s.studentId === st.id).length;
-        const card = document.createElement('div');
-        card.className = 'student-card glass';
-        card.setAttribute('onclick', `viewStudentProfile('${st.id}')`);
-        card.innerHTML = `
-            <div class="student-badge">${st.status}</div>
-            <div class="student-avatar">${st.name.charAt(0)}</div>
-            <h3 style="margin-bottom:6px;">${st.name}</h3>
-            <p style="color:var(--brand-primary); font-size:14px; font-weight:600; margin-bottom:12px;">${st.level}</p>
-            <p style="color:var(--text-muted); font-size:13px; line-height:1.4; margin-bottom:15px;"><i class="fas fa-bullseye"></i> الهدف: ${st.target}</p>
-            <div style="margin-top:15px; display:flex; gap:10px; justify-content:center;">
-                <button class="btn btn-secondary" onclick="event.stopPropagation(); deleteStudent('${st.id}')">
-                    <i class="fas fa-trash"></i> حذف
-                </button>
-            </div>
-            <div style="border-top:1px solid var(--border-color); padding-top:12px; font-size:12px; color:var(--text-muted); display:flex; justify-content:space-around; margin-top:10px;">
-                <span><i class="fas fa-book-reader"></i> الحصص: ${count}</span>
-                <span><i class="fas fa-calendar-day"></i> منذ: ${st.date}</span>
-            </div>
-        `;
-        container.appendChild(card);
-    });
-}
-
-window.filterStudents = () => {
-    const query = document.getElementById('search-student').value.toLowerCase();
-    document.querySelectorAll('.student-card').forEach((card, idx) => {
-        const student = window.state.students[idx];
-        if(student) {
-            const match = student.name.toLowerCase().includes(query) || student.level.toLowerCase().includes(query);
-            card.style.display = match ? 'block' : 'none';
-        }
-    });
-};
-
-// حفظ بيانات الطالب في Firestore
-window.saveStudentData = async () => {
-    const name = document.getElementById('stud-name').value.trim();
-    const level = document.getElementById('stud-level').value.trim();
-    const target = document.getElementById('stud-target').value.trim();
-    const notes = document.getElementById('stud-notes').value.trim();
-
-    if(!name || !level) {
-        showToast("يرجى ملء اسم الطالب ومستواه التعليمي", "error");
-        return;
-    }
-
-    const user = auth.currentUser;
-    if(!user) return showToast("يجب تسجيل الدخول أولاً", "error");
-
-    const studentData = {
-        userId: user.uid,
-        name: name,
-        level: level,
-        target: target || "عام",
-        notes: notes || "لا توجد ملاحظات إضافية",
-        date: new Date().toISOString().split('T')[0],
-        status: "نشط"
+      imagesPreview.innerHTML += `
+      <img src="${e.target.result}">
+      `;
     };
 
-    try {
-        const docRef = await addDoc(collection(db, "students"), studentData);
-        window.state.students.push({ id: docRef.id, ...studentData });
-        
-        showToast(`تم تسجيل الطالب ${name} بنجاح`, "success");
-        closeModal('add-student-modal');
-        
-        document.getElementById('stud-name').value = '';
-        document.getElementById('stud-level').value = '';
-        document.getElementById('stud-target').value = '';
-        document.getElementById('stud-notes').value = '';
-
-        renderStudentsCards();
-        renderDashboardStats();
-    } catch(e) {
-        showToast("حدث خطأ أثناء الحفظ", "error");
-    }
-};
-
-window.deleteStudent = async (studentId) => {
-    if(confirm('هل تريد حذف الطالب نهائياً؟')) {
-        try {
-            await deleteDoc(doc(db, "students", studentId));
-            window.state.students = window.state.students.filter(s => s.id !== studentId);
-            renderStudentsCards();
-            renderDashboardStats();
-            showToast('تم حذف الطالب بنجاح', 'success');
-        } catch(e) {
-            showToast("فشل الحذف من السيرفر", "error");
-        }
-    }
-};
-
-window.viewStudentProfile = (studentId) => {
-    window.state.currentSelectedStudentId = studentId;
-    switchSubView('student-profile');
-
-    const student = window.state.students.find(s => s.id === studentId);
-    const profileCard = document.getElementById('profile-details-card');
-    
-    if(student) {
-        profileCard.innerHTML = `
-            <div class="student-avatar" style="width:90px; height:90px; font-size:34px;">${student.name.charAt(0)}</div>
-            <div>
-                <h2 style="margin-bottom:8px;">${student.name}</h2>
-                <span style="background:rgba(79, 70, 229, 0.1); color:var(--brand-primary); padding:4px 12px; border-radius:20px; font-size:13px; font-weight:600;">${student.level}</span>
-                <p style="color:var(--text-muted); font-size:14px; margin-top:12px;"><i class="fas fa-info-circle"></i> ${student.notes}</p>
-            </div>
-            <div style="text-align:left; border-right:1px solid var(--border-color); padding-right:20px;">
-                <p style="font-size:14px; color:var(--text-muted);">الهدف: <strong>${student.target}</strong></p>
-                <p style="font-size:14px; color:var(--text-muted); margin-top:6px;">تاريخ الانتساب: <strong>${student.date}</strong></p>
-            </div>
-        `;
-        renderStudentTimeline(studentId);
-    }
-};
-
-// عرض الحصص من Firestore وقراءة ملفات الـ Base64 مباشرة
-function renderStudentTimeline(studentId) {
-    const container = document.getElementById('sessions-timeline-container');
-    container.innerHTML = '';
-
-    const studentSessions = window.state.sessions.filter(s => s.studentId === studentId);
-
-    if(studentSessions.length === 0) {
-        container.innerHTML = `<p style="color:var(--text-muted); padding:20px 0;">لا توجد حصص مسجلة وموثقة لهذا الطالب بعد.</p>`;
-        return;
-    }
-
-    studentSessions.sort((a,b) => new Date(b.date) - new Date(a.date)).forEach(sess => {
-        const item = document.createElement('div');
-        item.className = 'timeline-item glass';
-        item.style.padding = '20px';
-        item.style.borderRadius = 'var(--radius-md)';
-        item.innerHTML = `
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-                <h4 style="color:var(--brand-primary); font-size:16px;">${sess.title}</h4>
-                <span style="font-size:12px; color:var(--text-muted); font-weight:600;"><i class="far fa-clock"></i> ${sess.date}</span>
-            </div>
-            <p style="font-size:14px; line-height:1.5; margin-bottom:10px;">${sess.details}</p>
-            <div style="background:rgba(255,255,255,0.2); padding:8px 12px; border-radius:6px; font-size:13px; display:inline-block; border:1px solid var(--border-color);">
-                <strong style="color:var(--brand-secondary);"><i class="fas fa-tasks"></i> الواجب المطلوب:</strong> ${sess.homework}
-            </div>
-            ${sess.fileBase64 ? `<div style="margin-top:10px; font-size:12px;"><i class="fas fa-paperclip"></i> ملف مرفق: <a href="${sess.fileBase64}" download="${sess.fileName || 'file'}" style="color:var(--brand-primary); text-decoration:underline;">تحميل أو فتح (${sess.fileName || 'الملف'})</a></div>` : ''}
-            ${sess.audioBase64 ? `<div style="margin-top:12px;"><audio src="${sess.audioBase64}" controls style="width:100%; max-width:320px; height:34px;"></audio></div>` : ''}
-            <div style="margin-top:15px; border-top:1px solid var(--border-color); padding-top:10px;">
-                <button class="btn btn-secondary" style="padding:4px 10px; font-size:12px;" onclick="deleteSession('${sess.id}')">
-                    <i class="fas fa-trash"></i> حذف الحصة
-                </button>
-            </div>
-        `;
-        container.appendChild(item);
-    });
+    reader.readAsDataURL(file);
+  });
 }
 
-window.openAddSessionModal = () => {
-    document.getElementById('student-select-group').style.display = 'none';
-    document.getElementById('add-session-modal').classList.add('active');
-};
-
-window.openAddSessionModalGlobal = () => {
-    const select = document.getElementById('session-student-select');
-    select.innerHTML = '';
-    window.state.students.forEach(st => {
-        select.innerHTML += `<option value="${st.id}">${st.name}</option>`;
-    });
-    document.getElementById('student-select-group').style.display = 'block';
-    document.getElementById('add-session-modal').classList.add('active');
-};
-
-// التقاط المرفقات
-window.triggerFileSelect = () => document.getElementById('file-input').click();
-window.handleFileSelect = (event) => {
-    const file = event.target.files[0];
-    if(file) {
-        window.state.currentFile = file;
-        document.getElementById('file-preview-name').innerText = `تم تجهيز ملف: ${file.name}`;
-    }
-};
-
-// معالجة وحفظ الحصة بالكامل بترميز Base64 وحفظها داخل Firestore مباشرة
-window.saveSessionData = async () => {
-    const title = document.getElementById('sess-title').value.trim();
-    const details = document.getElementById('sess-details').value.trim();
-    const homework = document.getElementById('sess-homework').value.trim();
-    const duration = parseFloat(document.getElementById('sess-duration').value);
-
-    let studentId = window.state.currentSelectedStudentId;
-    if(document.getElementById('student-select-group').style.display === 'block') {
-        studentId = document.getElementById('session-student-select').value;
-    }
-
-    if(!title || !details) {
-        showToast("يرجى ملء عنوان الحصة وتفاصيل الشرح الرئيسي", "error");
-        return;
-    }
-
-    const user = auth.currentUser;
-    if(!user) return showToast("انتهت الجلسة، اعد تسجيل الدخول", "error");
-
-    showToast("جاري معالجة وتشفير الوسائط وحفظها في Firestore...", "info");
-
-    try {
-        // تحويل الملف والصوت إلى نصوص Base64 بشكل متوازي
-        const fileBase64 = await convertToBase64(window.state.currentFile);
-        const audioBase64 = await convertToBase64(window.state.currentAudioBlob);
-
-        // كتابة المستند بالكامل داخل Firestore
-        const sessionData = {
-            userId: user.uid,
-            studentId: studentId,
-            title: title,
-            details: details,
-            homework: homework || "مراجعة ما تم شرحه شفهياً",
-            date: new Date().toISOString().split('T')[0],
-            duration: duration,
-            fileBase64: fileBase64, // حفظ النص المشفر للملف هنا
-            fileName: window.state.currentFile ? window.state.currentFile.name : null,
-            audioBase64: audioBase64 // حفظ النص المشفر للصوت هنا
-        };
-
-        const docRef = await addDoc(collection(db, "sessions"), sessionData);
-        window.state.sessions.push({ id: docRef.id, ...sessionData });
-
-        showToast("تم توثيق الحصة وحفظ البيانات بالكامل بنجاح", "success");
-        closeModal('add-session-modal');
-
-        // إعادة ضبط الاستمارات
-        document.getElementById('sess-title').value = '';
-        document.getElementById('sess-details').value = '';
-        document.getElementById('sess-homework').value = '';
-        document.getElementById('file-preview-name').innerText = '';
-        const oldAudio = document.querySelector('.recorder-box audio');
-        if(oldAudio) oldAudio.remove();
-        
-        window.state.currentFile = null;
-        window.state.currentAudioBlob = null;
-
-        if(window.state.currentSelectedStudentId) {
-            renderStudentTimeline(window.state.currentSelectedStudentId);
-        } else {
-            renderDashboardStats();
-        }
-
-    } catch(e) {
-        console.error(e);
-        showToast("حدث خطأ! قد يكون حجم الملف أو الصوت أكبر من 1 ميجابايت", "error");
-    }
-};
-
-window.deleteSession = async (sessionId) => {
-    if(confirm('هل تريد حذف هذه الحصة نهائياً؟')) {
-        try {
-            await deleteDoc(doc(db, "sessions", sessionId));
-            window.state.sessions = window.state.sessions.filter(s => s.id !== sessionId);
-
-            if(window.state.currentSelectedStudentId){
-                renderStudentTimeline(window.state.currentSelectedStudentId);
-            }
-            renderDashboardStats();
-            showToast('تم حذف الجلسة بنجاح', 'success');
-        } catch(e) {
-            showToast("تعذر حذف الجلسة من السيرفر", "error");
-        }
-    }
-};
-
-window.exportPDF = () => {
-    const student = window.state.students.find(s => s.id === window.state.currentSelectedStudentId);
-    if(student) {
-        showToast(`جاري تصدير ملف الطالب الاحترافي...`, "info");
-        setTimeout(() => {
-            alert(`[TeacherFlow Engine]\nتم توليد كشف الأداء بنجاح لـ ${student.name}.\nالملف جاهز للطباعة والمشاركة.`);
-        }, 1000);
-    }
-};
-
-// السحب والإفلات للملفات
-const dropZone = document.getElementById('drop-zone');
-dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.style.background = 'rgba(79,70,229,0.1)'; });
-dropZone.addEventListener('dragleave', () => { dropZone.style.background = 'transparent'; });
-dropZone.addEventListener('drop', (e) => {
-    e.preventDefault();
-    dropZone.style.background = 'transparent';
-    const file = e.dataTransfer.files[0];
-    if(file) {
-        window.state.currentFile = file;
-        document.getElementById('file-preview-name').innerText = `تم اختيار ملف: ${file.name}`;
-    }
-});
-
-// إغلاق المودال عند الضغط في الخارج
-document.querySelectorAll('.modal').forEach(modal => {
-    modal.addEventListener('click', (e) => { if(e.target === modal) modal.classList.remove('active'); });
-});
-
-// إدارة تسجيل الصوت الحقيقي
 let mediaRecorder;
-let audioChunks = [];
 
-window.toggleAudioRecording = async () => {
-    const btn = document.getElementById('record-btn');
-    const visualizer = document.getElementById('wave-visualizer');
+let audioBlob;
 
-    if(!window.state.isRecording) {
-        try {
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            mediaRecorder = new MediaRecorder(stream);
-            audioChunks = [];
+window.startRecording = async function(){
 
-            mediaRecorder.ondataavailable = event => audioChunks.push(event.data);
-            mediaRecorder.onstop = () => {
-                const audioBlob = new Blob(audioChunks, { type: 'audio/mp3' });
-                window.state.currentAudioBlob = audioBlob; 
+  const stream =
+  await navigator.mediaDevices.getUserMedia({
+    audio:true
+  });
 
-                const audioURL = URL.createObjectURL(audioBlob);
-                const audio = document.createElement('audio');
-                audio.controls = true;
-                audio.src = audioURL;
-                audio.style.width = '100%';
-                audio.style.marginTop = '15px';
+  mediaRecorder =
+  new MediaRecorder(stream);
 
-                const recorderBox = document.querySelector('.recorder-box');
-                const oldAudio = recorderBox.querySelector('audio');
-                if(oldAudio) oldAudio.remove();
-                
-                recorderBox.appendChild(audio);
-                showToast("تم إعداد الملاحظة الصوتية، اضغط حفظ الحصة لرفعها", "success");
-            };
+  let chunks = [];
 
-            mediaRecorder.start();
-            window.state.isRecording = true;
-            btn.innerHTML = `<i class="fas fa-stop"></i> إيقاف وحفظ التسجيل`;
-            btn.style.background = "#ef4444";
-            btn.style.color = "white";
-            visualizer.classList.add('active');
-        } catch(err) {
-            showToast("لم نتمكن من الوصول للميكروفون", "error");
-        }
-    } else {
-        mediaRecorder.stop();
-        window.state.isRecording = false;
-        btn.innerHTML = `<i class="fas fa-circle" style="color:red;"></i> ابدأ التسجيل الحي`;
-        btn.style.background = "transparent";
-        btn.style.color = "var(--brand-primary)";
-        visualizer.classList.remove('active');
-    }
+  mediaRecorder.ondataavailable = e => {
+    chunks.push(e.data);
+  };
+
+  mediaRecorder.onstop = ()=>{
+
+    audioBlob = new Blob(chunks,{
+      type:"audio/mp3"
+    });
+
+    audioPreview.src =
+    URL.createObjectURL(audioBlob);
+  };
+
+  mediaRecorder.start();
 };
+
+window.stopRecording = function(){
+
+  if(mediaRecorder){
+
+    mediaRecorder.stop();
+  }
+};
+
+window.saveSession = async function(){
+
+  let imageUrls = [];
+
+  for(const file of selectedFiles){
+
+    const storageRef = ref(
+      storage,
+      "images/" + Date.now() + file.name
+    );
+
+    await uploadBytes(storageRef,file);
+
+    const url =
+    await getDownloadURL(storageRef);
+
+    imageUrls.push(url);
+  }
+
+  let audioUrl = "";
+
+  if(audioBlob){
+
+    const audioRef = ref(
+      storage,
+      "audio/" + Date.now() + ".mp3"
+    );
+
+    await uploadBytes(audioRef,audioBlob);
+
+    audioUrl =
+    await getDownloadURL(audioRef);
+  }
+
+  const data = {
+
+    student: sessionStudent.value,
+
+    lesson: lessonContent.value,
+
+    homework: homeworkContent.value,
+
+    date: sessionDate.value,
+
+    images: imageUrls,
+
+    audio: audioUrl
+
+  };
+
+  await addDoc(collection(db,"sessions"),data);
+
+  closeSessionModal();
+
+  clearSessionFields();
+
+  loadSessions();
+};
+
+function clearSessionFields(){
+
+  lessonContent.value = "";
+
+  homeworkContent.value = "";
+
+  sessionDate.value = "";
+
+  imagesPreview.innerHTML = "";
+
+  selectedFiles = [];
+
+  audioPreview.src = "";
+
+  audioBlob = null;
+}
+
+async function loadSessions(){
+
+  const snapshot =
+  await getDocs(collection(db,"sessions"));
+
+  sessionsList.innerHTML = "";
+
+  snapshot.forEach(item=>{
+
+    const data = item.data();
+
+    let imagesHTML = "";
+
+    data.images.forEach(img=>{
+
+      imagesHTML += `
+      <img src="${img}"
+      style="
+      width:120px;
+      border-radius:10px;
+      margin:5px;
+      ">
+      `;
+    });
+
+    sessionsList.innerHTML += `
+
+    <div class="card">
+
+      <h3>${data.student}</h3>
+
+      <p><b>الحصة:</b> ${data.lesson}</p>
+
+      <p><b>الواجب:</b> ${data.homework}</p>
+
+      <p class="small">
+      ${data.date}
+      </p>
+
+      <div>
+      ${imagesHTML}
+      </div>
+
+      ${
+        data.audio
+        ?
+        `
+        <audio controls src="${data.audio}"></audio>
+        `
+        :
+        ""
+      }
+
+      <br><br>
+
+      <button class="danger"
+      onclick="deleteSession('${item.id}')">
+
+      حذف
+
+      </button>
+
+    </div>
+
+    `;
+  });
+}
+
+window.deleteSession = async function(id){
+
+  await deleteDoc(doc(db,"sessions",id));
+
+  loadSessions();
+};
+
+loadStudents();
+
+loadSessions();
 
 </script>
+
 </body>
 </html>
