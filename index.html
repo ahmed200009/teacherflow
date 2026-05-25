@@ -1,150 +1,99 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
+
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <title>لوحة المعلم</title>
 
 <style>
 
-*{
-  box-sizing:border-box;
-}
-
 body{
-  margin:0;
-  font-family:Arial;
-  background:#f3f4f6;
+font-family:Arial;
+background:#f3f4f6;
+margin:0;
+padding:20px;
 }
 
 .container{
-  max-width:1100px;
-  margin:auto;
-  padding:20px;
+max-width:1000px;
+margin:auto;
 }
 
 h1{
-  text-align:center;
+text-align:center;
 }
 
 .tabs{
-  display:flex;
-  gap:10px;
-  margin-bottom:20px;
-}
-
-.tabs button{
-  flex:1;
+display:flex;
+gap:10px;
+margin-bottom:20px;
 }
 
 button{
-  border:none;
-  padding:12px;
-  border-radius:12px;
-  cursor:pointer;
-  font-size:15px;
+padding:10px 15px;
+border:none;
+border-radius:10px;
+cursor:pointer;
 }
 
 .primary{
-  background:#2563eb;
-  color:white;
+background:#2563eb;
+color:white;
 }
 
 .danger{
-  background:#dc2626;
-  color:white;
+background:#dc2626;
+color:white;
 }
 
 .card{
-  background:white;
-  padding:15px;
-  border-radius:18px;
-  margin-bottom:15px;
-  box-shadow:0 2px 10px rgba(0,0,0,0.08);
+background:white;
+padding:15px;
+border-radius:15px;
+margin-bottom:15px;
+box-shadow:0 2px 8px rgba(0,0,0,0.1);
 }
 
 .modal{
-  position:fixed;
-  inset:0;
-  background:rgba(0,0,0,0.5);
-  display:none;
-  justify-content:center;
-  align-items:center;
-  z-index:999;
+position:fixed;
+inset:0;
+background:rgba(0,0,0,0.5);
+display:none;
+justify-content:center;
+align-items:center;
 }
 
 .modal-content{
-  background:white;
-  width:95%;
-  max-width:600px;
-  padding:20px;
-  border-radius:20px;
-  max-height:90vh;
-  overflow:auto;
+background:white;
+padding:20px;
+border-radius:20px;
+width:95%;
+max-width:500px;
 }
 
 input,
 textarea,
 select{
-  width:100%;
-  padding:12px;
-  margin-bottom:10px;
-  border-radius:12px;
-  border:1px solid #ccc;
-  font-size:15px;
-}
-
-textarea{
-  min-height:100px;
-  resize:vertical;
+width:100%;
+padding:10px;
+margin-bottom:10px;
+border-radius:10px;
+border:1px solid #ccc;
 }
 
 .actions{
-  display:flex;
-  gap:10px;
-}
-
-.drop-zone{
-  border:2px dashed #999;
-  padding:25px;
-  text-align:center;
-  border-radius:15px;
-  background:#fafafa;
-  margin-bottom:15px;
-  cursor:pointer;
-}
-
-.images-preview{
-  display:flex;
-  gap:10px;
-  flex-wrap:wrap;
-  margin-bottom:15px;
-}
-
-.images-preview img{
-  width:100px;
-  height:100px;
-  object-fit:cover;
-  border-radius:10px;
+display:flex;
+gap:10px;
 }
 
 .tab{
-  display:none;
+display:none;
 }
 
 .active{
-  display:block;
-}
-
-audio{
-  width:100%;
-  margin-top:10px;
-}
-
-.small{
-  font-size:14px;
-  color:#555;
+display:block;
 }
 
 </style>
@@ -157,21 +106,32 @@ audio{
 <h1>لوحة المعلم</h1>
 
 <div class="tabs">
-  <button class="primary" onclick="showTab('studentsTab')">
-    الطلاب
-  </button>
 
-  <button class="primary" onclick="showTab('sessionsTab')">
-    الحصص
-  </button>
+<button class="primary"
+onclick="showTab('studentsTab')">
+
+الطلاب
+
+</button>
+
+<button class="primary"
+onclick="showTab('sessionsTab')">
+
+الحصص
+
+</button>
+
 </div>
 
 <!-- الطلاب -->
 
 <div id="studentsTab" class="tab active">
 
-<button class="primary" onclick="openStudentModal()">
+<button class="primary"
+onclick="openStudentModal()">
+
 إضافة طالب
+
 </button>
 
 <br><br>
@@ -184,8 +144,11 @@ audio{
 
 <div id="sessionsTab" class="tab">
 
-<button class="primary" onclick="openSessionModal()">
+<button class="primary"
+onclick="openSessionModal()">
+
 إضافة حصة
+
 </button>
 
 <br><br>
@@ -210,18 +173,25 @@ audio{
 
 <input id="studentLevel" placeholder="المستوى">
 
-<textarea id="studentMethod" placeholder="طريقة التدريس"></textarea>
+<textarea id="studentMethod"
+placeholder="طريقة التدريس"></textarea>
 
-<textarea id="studentNotes" placeholder="ملاحظات"></textarea>
+<textarea id="studentNotes"
+placeholder="ملاحظات"></textarea>
 
 <div class="actions">
 
-<button class="primary" onclick="saveStudent()">
+<button class="primary"
+onclick="saveStudent()">
+
 حفظ
+
 </button>
 
 <button onclick="closeStudentModal()">
+
 إلغاء
+
 </button>
 
 </div>
@@ -240,46 +210,27 @@ audio{
 
 <select id="sessionStudent"></select>
 
-<textarea id="lessonContent" placeholder="ماذا تم في الحصة"></textarea>
+<textarea id="lessonContent"
+placeholder="ماذا تم في الحصة"></textarea>
 
-<textarea id="homeworkContent" placeholder="الواجب"></textarea>
+<textarea id="homeworkContent"
+placeholder="الواجب"></textarea>
 
 <input type="datetime-local" id="sessionDate">
 
-<div class="drop-zone" id="dropZone">
-اسحب الصور هنا أو اضغط للاختيار
-</div>
-
-<input type="file" id="imageInput" multiple hidden accept="image/*">
-
-<div class="images-preview" id="imagesPreview"></div>
-
 <div class="actions">
 
-<button class="primary" onclick="startRecording()">
-تسجيل صوت
-</button>
+<button class="primary"
+onclick="saveSession()">
 
-<button onclick="stopRecording()">
-إيقاف
-</button>
+حفظ
 
-</div>
-
-<br>
-
-<audio id="audioPreview" controls></audio>
-
-<br><br>
-
-<div class="actions">
-
-<button class="primary" onclick="saveSession()">
-حفظ الحصة
 </button>
 
 <button onclick="closeSessionModal()">
+
 إلغاء
+
 </button>
 
 </div>
@@ -294,36 +245,36 @@ import { initializeApp }
 from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 
 import {
-  getFirestore,
-  collection,
-  addDoc,
-  getDocs,
-  deleteDoc,
-  doc
-}
-from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-import {
-  getStorage,
-  ref,
-  uploadBytes,
-  getDownloadURL
+getFirestore,
+
+collection,
+
+addDoc,
+
+getDocs,
+
+deleteDoc,
+
+doc
+
 }
-from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
+
+from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const firebaseConfig = {
 
-  apiKey: "ضع apiKey",
+apiKey: "ضع apiKey",
 
-  authDomain: "ضع authDomain",
+authDomain: "ضع authDomain",
 
-  projectId: "ضع projectId",
+projectId: "ضع projectId",
 
-  storageBucket: "ضع storageBucket",
+storageBucket: "ضع storageBucket",
 
-  messagingSenderId: "ضع messagingSenderId",
+messagingSenderId: "ضع messagingSenderId",
 
-  appId: "ضع appId"
+appId: "ضع appId"
 
 };
 
@@ -331,363 +282,194 @@ const app = initializeApp(firebaseConfig);
 
 const db = getFirestore(app);
 
-const storage = getStorage(app);
-
 window.showTab = function(tab){
 
-  document.querySelectorAll(".tab")
-  .forEach(el => el.classList.remove("active"));
+document.querySelectorAll(".tab")
+.forEach(el=>el.classList.remove("active"));
 
-  document.getElementById(tab)
-  .classList.add("active");
+document.getElementById(tab)
+.classList.add("active");
+
 };
 
 window.openStudentModal = function(){
-  studentModal.style.display = "flex";
+
+studentModal.style.display = "flex";
+
 };
 
 window.closeStudentModal = function(){
-  studentModal.style.display = "none";
+
+studentModal.style.display = "none";
+
 };
 
 window.openSessionModal = function(){
-  sessionModal.style.display = "flex";
+
+sessionModal.style.display = "flex";
+
 };
 
 window.closeSessionModal = function(){
-  sessionModal.style.display = "none";
+
+sessionModal.style.display = "none";
+
 };
 
 window.saveStudent = async function(){
 
-  const data = {
+const data = {
 
-    name: studentName.value,
+name: studentName.value,
 
-    goal: studentGoal.value,
+goal: studentGoal.value,
 
-    level: studentLevel.value,
+level: studentLevel.value,
 
-    method: studentMethod.value,
+method: studentMethod.value,
 
-    notes: studentNotes.value
+notes: studentNotes.value
 
-  };
-
-  await addDoc(collection(db,"students"),data);
-
-  closeStudentModal();
-
-  clearStudentFields();
-
-  loadStudents();
 };
 
-function clearStudentFields(){
+await addDoc(
+collection(db,"students"),
+data
+);
 
-  studentName.value = "";
+closeStudentModal();
 
-  studentGoal.value = "";
+loadStudents();
 
-  studentLevel.value = "";
-
-  studentMethod.value = "";
-
-  studentNotes.value = "";
-}
+};
 
 async function loadStudents(){
 
-  const snapshot =
-  await getDocs(collection(db,"students"));
+const snapshot =
+await getDocs(collection(db,"students"));
 
-  studentsList.innerHTML = "";
+studentsList.innerHTML = "";
 
-  sessionStudent.innerHTML = "";
+sessionStudent.innerHTML = "";
 
-  snapshot.forEach(item => {
+snapshot.forEach(item=>{
 
-    const data = item.data();
+const data = item.data();
 
-    studentsList.innerHTML += `
+studentsList.innerHTML += `
 
-    <div class="card">
+<div class="card">
 
-      <h3>${data.name}</h3>
+<h3>${data.name}</h3>
 
-      <p><b>الهدف:</b> ${data.goal}</p>
+<p>الهدف: ${data.goal}</p>
 
-      <p><b>المستوى:</b> ${data.level}</p>
+<p>المستوى: ${data.level}</p>
 
-      <p><b>طريقة التدريس:</b> ${data.method}</p>
+<p>طريقة التدريس: ${data.method}</p>
 
-      <p><b>الملاحظات:</b> ${data.notes}</p>
+<p>ملاحظات: ${data.notes}</p>
 
-      <button class="danger"
-      onclick="deleteStudent('${item.id}')">
+<button class="danger"
+onclick="deleteStudent('${item.id}')">
 
-      حذف
+حذف
 
-      </button>
+</button>
 
-    </div>
+</div>
 
-    `;
+`;
 
-    sessionStudent.innerHTML += `
+sessionStudent.innerHTML += `
 
-    <option value="${data.name}">
-      ${data.name}
-    </option>
+<option value="${data.name}">
+${data.name}
+</option>
 
-    `;
-  });
+`;
+
+});
+
 }
 
 window.deleteStudent = async function(id){
 
-  await deleteDoc(doc(db,"students",id));
+await deleteDoc(doc(db,"students",id));
 
-  loadStudents();
-};
+loadStudents();
 
-let selectedFiles = [];
-
-dropZone.onclick = () => {
-
-  imageInput.click();
-};
-
-imageInput.addEventListener("change",(e)=>{
-
-  selectedFiles = [...e.target.files];
-
-  renderImages();
-});
-
-dropZone.addEventListener("dragover",(e)=>{
-
-  e.preventDefault();
-});
-
-dropZone.addEventListener("drop",(e)=>{
-
-  e.preventDefault();
-
-  selectedFiles = [...e.dataTransfer.files];
-
-  renderImages();
-});
-
-function renderImages(){
-
-  imagesPreview.innerHTML = "";
-
-  selectedFiles.forEach(file=>{
-
-    const reader = new FileReader();
-
-    reader.onload = function(e){
-
-      imagesPreview.innerHTML += `
-      <img src="${e.target.result}">
-      `;
-    };
-
-    reader.readAsDataURL(file);
-  });
-}
-
-let mediaRecorder;
-
-let audioBlob;
-
-window.startRecording = async function(){
-
-  const stream =
-  await navigator.mediaDevices.getUserMedia({
-    audio:true
-  });
-
-  mediaRecorder =
-  new MediaRecorder(stream);
-
-  let chunks = [];
-
-  mediaRecorder.ondataavailable = e => {
-    chunks.push(e.data);
-  };
-
-  mediaRecorder.onstop = ()=>{
-
-    audioBlob = new Blob(chunks,{
-      type:"audio/mp3"
-    });
-
-    audioPreview.src =
-    URL.createObjectURL(audioBlob);
-  };
-
-  mediaRecorder.start();
-};
-
-window.stopRecording = function(){
-
-  if(mediaRecorder){
-
-    mediaRecorder.stop();
-  }
 };
 
 window.saveSession = async function(){
 
-  let imageUrls = [];
+const data = {
 
-  for(const file of selectedFiles){
+student: sessionStudent.value,
 
-    const storageRef = ref(
-      storage,
-      "images/" + Date.now() + file.name
-    );
+lesson: lessonContent.value,
 
-    await uploadBytes(storageRef,file);
+homework: homeworkContent.value,
 
-    const url =
-    await getDownloadURL(storageRef);
+date: sessionDate.value
 
-    imageUrls.push(url);
-  }
-
-  let audioUrl = "";
-
-  if(audioBlob){
-
-    const audioRef = ref(
-      storage,
-      "audio/" + Date.now() + ".mp3"
-    );
-
-    await uploadBytes(audioRef,audioBlob);
-
-    audioUrl =
-    await getDownloadURL(audioRef);
-  }
-
-  const data = {
-
-    student: sessionStudent.value,
-
-    lesson: lessonContent.value,
-
-    homework: homeworkContent.value,
-
-    date: sessionDate.value,
-
-    images: imageUrls,
-
-    audio: audioUrl
-
-  };
-
-  await addDoc(collection(db,"sessions"),data);
-
-  closeSessionModal();
-
-  clearSessionFields();
-
-  loadSessions();
 };
 
-function clearSessionFields(){
+await addDoc(
+collection(db,"sessions"),
+data
+);
 
-  lessonContent.value = "";
+closeSessionModal();
 
-  homeworkContent.value = "";
+loadSessions();
 
-  sessionDate.value = "";
-
-  imagesPreview.innerHTML = "";
-
-  selectedFiles = [];
-
-  audioPreview.src = "";
-
-  audioBlob = null;
-}
+};
 
 async function loadSessions(){
 
-  const snapshot =
-  await getDocs(collection(db,"sessions"));
+const snapshot =
+await getDocs(collection(db,"sessions"));
 
-  sessionsList.innerHTML = "";
+sessionsList.innerHTML = "";
 
-  snapshot.forEach(item=>{
+snapshot.forEach(item=>{
 
-    const data = item.data();
+const data = item.data();
 
-    let imagesHTML = "";
+sessionsList.innerHTML += `
 
-    data.images.forEach(img=>{
+<div class="card">
 
-      imagesHTML += `
-      <img src="${img}"
-      style="
-      width:120px;
-      border-radius:10px;
-      margin:5px;
-      ">
-      `;
-    });
+<h3>${data.student}</h3>
 
-    sessionsList.innerHTML += `
+<p>الحصة: ${data.lesson}</p>
 
-    <div class="card">
+<p>الواجب: ${data.homework}</p>
 
-      <h3>${data.student}</h3>
+<p>${data.date}</p>
 
-      <p><b>الحصة:</b> ${data.lesson}</p>
+<button class="danger"
+onclick="deleteSession('${item.id}')">
 
-      <p><b>الواجب:</b> ${data.homework}</p>
+حذف
 
-      <p class="small">
-      ${data.date}
-      </p>
+</button>
 
-      <div>
-      ${imagesHTML}
-      </div>
+</div>
 
-      ${
-        data.audio
-        ?
-        `
-        <audio controls src="${data.audio}"></audio>
-        `
-        :
-        ""
-      }
+`;
 
-      <br><br>
+});
 
-      <button class="danger"
-      onclick="deleteSession('${item.id}')">
-
-      حذف
-
-      </button>
-
-    </div>
-
-    `;
-  });
 }
 
 window.deleteSession = async function(id){
 
-  await deleteDoc(doc(db,"sessions",id));
+await deleteDoc(doc(db,"sessions",id));
 
-  loadSessions();
+loadSessions();
+
 };
 
 loadStudents();
